@@ -1,0 +1,31 @@
+.main-content {
+  display: flex;
+  justify-content: center;
+}
+
+.content-wrapper {
+  width: 100%;
+  margin: 5px auto 10px;
+}
+
+/* Responsive */
+@media (max-width: 575.98px) {
+  .content-wrapper {
+    width: 90%;
+  }
+}
+@media (min-width: 576px) and (max-width: 767.98px) {
+  .content-wrapper {
+    width: 80%;
+  }
+}
+@media (min-width: 768px) and (max-width: 991.98px) {
+  .content-wrapper {
+    width: 70%;
+  }
+}
+@media (min-width: 992px) {
+  .content-wrapper {
+    width: 60%;
+  }
+}

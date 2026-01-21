@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+    <data name="LoginSuccess" xml:space="preserve">
+        <value>ログイン成功！</value>
+    </data>
+    <data name="LoginFailed" xml:space="preserve">
+        <value>ログイン失敗。ユーザー名とパスワードをもう一度チェックしてください。</value>
+    </data>
+    <data name="ConfirmEmail" xml:space="preserve">
+        <value>確認メールを送信しました。メールを確認してください。</value>
+    </data>
+    <data name="UsernameRegister" xml:space="preserve">
+        <value>ユーザー名は3文字以上20文字以下で、特殊文字を含めることはできません。</value>
+    </data>
+    <data name="DisplaynameRegister" xml:space="preserve">
+        <value>表示名は3文字以上50文字以下で入力してください。</value>
+    </data>
+    <data name="PasswordRegister" xml:space="preserve">
+        <value>パスワードは8文字以上で、大文字、小文字、数字、特殊文字を含める必要があります。</value>
+    </data>
+    <data name="EmailRegister" xml:space="preserve">
+        <value>無効なメールアドレスです。</value>
+    </data>
+    <data name="DobRegister" xml:space="preserve">
+    <value>生年月日が無効です。13歳以上であることを確認してください。</value>
+    </data>
+    <data name="UsernameExist" xml:space="preserve">
+        <value>ユーザー名は既に存在します。別の名前を選択してください。</value>
+    </data>
+    <data name="EmailExist" xml:space="preserve">
+        <value>メールアドレスは既に使用されています。別のメールアドレスを使用してください。 </value>
+    </data>
+    <data name="InvalidToken" xml:space="preserve">
+        <value>リンクが無効であるか、有効期限が切れています。</value>
+    </data>
+    <data name="ConfirmSuccessful" xml:space="preserve">
+        <value>確認が成功しました。これでアカウントにログインできます。</value>
+    </data>
+    <data name="ForgotPasswordConfirmSuccessful" xml:space="preserve">
+        <value>確認が成功しました。今すぐパスワードを変更してください。</value>
+    </data>
+    <data name="PasswordChanged" xml:space="preserve">
+        <value>パスワードが変更されました。</value>
+    </data>
+</root>
