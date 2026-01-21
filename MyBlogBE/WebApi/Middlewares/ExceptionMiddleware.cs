@@ -3,7 +3,7 @@ using System.Text.Json;
 using Application.Dtos;
 using Application.Exceptions;
 
-namespace MyBlog.WebApi.Middlewares;
+namespace WebApi.Middlewares;
 
 public class ExceptionMiddleware
 {
@@ -34,19 +34,41 @@ public class ExceptionMiddleware
         context.Response.ContentType = "application/json";
 
         // Default to 500 Internal Server Error
-        var statusCode = (int)HttpStatusCode.InternalServerError;
-        var message = "Internal Server Error từ hệ thống.";
+        int statusCode;
+        string? message;
+        object? data = null;
 
-        // If the exception is a custom BaseException, use its status code and message
-        if (exception is BaseException customEx)
+        // If the exception is a custom BaseException, use its status code, message, and data
+        switch (exception)
         {
-            statusCode = customEx.StatusCode;
-            message = customEx.Message;
+            case BadRequestException badRequestEx:
+                statusCode = (int)HttpStatusCode.BadRequest; // Trả về lỗi 400
+                message = badRequestEx.Message;
+                data = badRequestEx.Data;
+                break;
+
+            case NotFoundException notFoundEx:
+                statusCode = (int)HttpStatusCode.NotFound; // Trả về lỗi 404
+                message = notFoundEx.Message;
+                data = notFoundEx.Data;
+                break;
+
+            case ForbiddenException forbiddenEx:
+                statusCode = (int)HttpStatusCode.Forbidden; // Trả về lỗi 403
+                message = forbiddenEx.Message;
+                data = forbiddenEx.Data;
+                break;
+
+            // Thêm các loại Exception khác nếu cần
+            default:
+                statusCode = (int)HttpStatusCode.InternalServerError; // Trả về lỗi 500
+                message = "Internal Server Error";
+                break;
         }
 
         context.Response.StatusCode = statusCode;
 
-        var response = new ApiResponse<object>(statusCode, message);
+        var response = new ApiResponse<object?>(statusCode, message, data);
 
         var options = new JsonSerializerOptions
         {
@@ -54,6 +76,6 @@ public class ExceptionMiddleware
         };
         var json = JsonSerializer.Serialize(response, options);
 
-        return context.Response.WriteAsync(json);
+        return context.Response.WriteAsJsonAsync(response, options);
     }
 }

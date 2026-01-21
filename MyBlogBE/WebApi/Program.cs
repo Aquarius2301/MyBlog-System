@@ -1,7 +1,6 @@
 using DataAccess;
 using DataAccess.Seeds;
 using Microsoft.AspNetCore.HttpOverrides;
-using MyBlog.WebApi.Middlewares;
 using WebApi.Extensions;
 using WebApi.Middlewares;
 
@@ -40,8 +39,8 @@ builder.Services.AddWebServices(builder.Configuration);
 var app = builder.Build();
 
 // Middlewares
-app.UseMiddleware<ExceptionMiddleware>();
 app.UseMiddleware<ApiLoggingMiddleware>();
+app.UseMiddleware<ExceptionMiddleware>();
 
 app.UseRequestLocalization();
 
