@@ -11,7 +11,7 @@ public class FormFileHelper : IFileStream
 
     public FormFileHelper(IFormFile formFile) => _formFile = formFile;
 
-    public string FileName => _formFile.FileName;
+    public string FileName => $"{Guid.NewGuid()}";
     public string ContentType => _formFile.ContentType;
     public long Length => _formFile.Length;
 
