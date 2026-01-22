@@ -1,5 +1,4 @@
 using BusinessObject.Entities;
-using BusinessObject.Enums;
 using Microsoft.EntityFrameworkCore;
 
 namespace DataAccess;
@@ -42,17 +41,6 @@ public class MyBlogContext : DbContext
             .WithOne(a => a.Account)
             .HasForeignKey<Account>(p => p.PictureId)
             .OnDelete(DeleteBehavior.NoAction);
-
-        // modelBuilder.Entity<Account>(entity =>
-        // {
-        //     entity
-        //         .Property(e => e.Status)
-        //         .HasConversion(
-        //             v => v.Code, // Lưu xuống DB là string (Code)
-        //             v => new StatusType(v) // Đọc từ DB lên thì tạo mới record
-        //         )
-        //         .HasMaxLength(20);
-        // });
 
         modelBuilder
             .Entity<Comment>()
@@ -144,6 +132,8 @@ public class MyBlogContext : DbContext
             .WithMany(c => c.Pictures)
             .HasForeignKey(c => c.CommentId)
             .OnDelete(DeleteBehavior.NoAction);
+
+        modelBuilder.Entity<Picture>().HasIndex(p => p.Link).IsUnique();
 
         modelBuilder
             .Entity<Post>()
