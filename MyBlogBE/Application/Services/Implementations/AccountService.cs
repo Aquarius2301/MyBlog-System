@@ -2,6 +2,8 @@ using Application.Dtos;
 using Application.Helpers;
 using Application.Services.Interfaces;
 using Application.Settings;
+using AutoMapper;
+using AutoMapper.QueryableExtensions;
 using DataAccess.Extensions;
 using DataAccess.UnitOfWork;
 using Microsoft.EntityFrameworkCore;
@@ -14,16 +16,19 @@ public class AccountService : IAccountService
     private readonly IUnitOfWork _unitOfWork;
     private readonly BaseSettings _baseSettings;
     private readonly IEmailService _emailService;
+    private readonly IMapper _mapper;
 
     public AccountService(
         IUnitOfWork unitOfWork,
         IEmailService emailService,
-        IOptions<BaseSettings> options
+        IOptions<BaseSettings> options,
+        IMapper mapper
     )
     {
         _unitOfWork = unitOfWork;
         _emailService = emailService;
         _baseSettings = options.Value;
+        _mapper = mapper;
     }
 
     public async Task<(List<AccountNameResponse>, DateTime?)> GetAccountByNameAsync(
@@ -43,14 +48,18 @@ public class AccountService : IAccountService
             .Take(pageSize + 1);
 
         var accounts = await query
-            .Select(a => new AccountNameResponse
-            {
-                Id = a.Id,
-                Username = a.Username,
-                DisplayName = a.DisplayName,
-                Avatar = a.Picture != null ? a.Picture.Link : string.Empty,
-                CreatedAt = a.CreatedAt,
-            })
+            // .Select(a => new AccountNameResponse
+            // {
+            //     Id = a.Id,
+            //     Username = a.Username,
+            //     DisplayName = a.DisplayName,
+            //     Avatar = a.Picture != null ? a.Picture.Link : string.Empty,
+            //     CreatedAt = a.CreatedAt,
+            // })
+            .ProjectTo<AccountNameResponse>(
+                _mapper.ConfigurationProvider,
+                new { currentAccId = Guid.Empty } // Has not following info here (fix later)
+            )
             .ToListAsync();
 
         var hasMore = accounts.Count > pageSize;
@@ -65,19 +74,23 @@ public class AccountService : IAccountService
         var account = await _unitOfWork
             .Accounts.ReadOnly()
             .WhereId(accountId)
-            .Select(a => new AccountResponse
-            {
-                Id = a.Id,
-                Username = a.Username,
-                Email = a.Email,
-                IsOwner = a.Id == accountId,
-                Language = a.Language.ToString(),
-                DisplayName = a.DisplayName,
-                DateOfBirth = a.DateOfBirth,
-                AvatarUrl = a.Picture != null ? a.Picture.Link : "",
-                Status = a.Status.ToString(),
-                CreatedAt = a.CreatedAt,
-            })
+            // .Select(a => new AccountResponse
+            // {
+            //     Id = a.Id,
+            //     Username = a.Username,
+            //     Email = a.Email,
+            //     IsOwner = a.Id == accountId,
+            //     Language = a.Language.ToString(),
+            //     DisplayName = a.DisplayName,
+            //     DateOfBirth = a.DateOfBirth,
+            //     AvatarUrl = a.Picture != null ? a.Picture.Link : "",
+            //     Status = a.Status.ToString(),
+            //     CreatedAt = a.CreatedAt,
+            // })
+            .ProjectTo<AccountResponse>(
+                _mapper.ConfigurationProvider,
+                new { currentAccId = accountId }
+            )
             .FirstOrDefaultAsync();
 
         return account;
@@ -88,18 +101,22 @@ public class AccountService : IAccountService
         var account = await _unitOfWork
             .Accounts.ReadOnly()
             .WhereUsername(username)
-            .Select(a => new AccountResponse
-            {
-                Id = a.Id,
-                Username = a.Username,
-                Email = a.Email,
-                IsOwner = a.Id == userId,
-                DisplayName = a.DisplayName,
-                DateOfBirth = a.DateOfBirth,
-                AvatarUrl = a.Picture != null ? a.Picture.Link : "",
-                Status = a.Status.ToString(),
-                CreatedAt = a.CreatedAt,
-            })
+            // .Select(a => new AccountResponse
+            // {
+            //     Id = a.Id,
+            //     Username = a.Username,
+            //     Email = a.Email,
+            //     IsOwner = a.Id == userId,
+            //     DisplayName = a.DisplayName,
+            //     DateOfBirth = a.DateOfBirth,
+            //     AvatarUrl = a.Picture != null ? a.Picture.Link : "",
+            //     Status = a.Status.ToString(),
+            //     CreatedAt = a.CreatedAt,
+            // })
+            .ProjectTo<AccountResponse>(
+                _mapper.ConfigurationProvider,
+                new { currentAccId = userId }
+            )
             .FirstOrDefaultAsync();
 
         return account;
@@ -127,19 +144,22 @@ public class AccountService : IAccountService
 
         await _unitOfWork.SaveChangesAsync();
 
-        return new AccountResponse
-        {
-            Id = account.Id,
-            Username = account.Username,
-            DisplayName = account.DisplayName,
-            DateOfBirth = account.DateOfBirth,
-            AvatarUrl = account.Picture != null ? account.Picture.Link : "",
-            IsOwner = true,
-            CreatedAt = account.CreatedAt,
-            Email = account.Email,
-            Status = account.Status.ToString(),
-            Language = account.Language.ToString(),
-        };
+        var res = _mapper.Map<AccountResponse>(account);
+
+        return res;
+        // return new AccountResponse
+        // {
+        //     Id = account.Id,
+        //     Username = account.Username,
+        //     DisplayName = account.DisplayName,
+        //     DateOfBirth = account.DateOfBirth,
+        //     AvatarUrl = account.Picture != null ? account.Picture.Link : "",
+        //     IsOwner = true,
+        //     CreatedAt = account.CreatedAt,
+        //     Email = account.Email,
+        //     Status = account.Status.ToString(),
+        //     Language = account.Language.ToString(),
+        // };
     }
 
     public async Task<bool> ChangePasswordAsync(Guid accountId, string password)

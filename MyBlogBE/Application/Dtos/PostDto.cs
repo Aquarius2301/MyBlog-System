@@ -52,7 +52,6 @@ public class UpdatePostRequest
 {
     public string Content { get; set; } = null!;
     public List<string> Pictures { get; set; } = [];
-    public bool ClearPictures { get; set; } = false;
 }
 
 public class UpdatePostResponse

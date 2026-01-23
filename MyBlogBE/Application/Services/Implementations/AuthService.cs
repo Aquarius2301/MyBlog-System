@@ -2,6 +2,7 @@ using Application.Dtos;
 using Application.Helpers;
 using Application.Services.Interfaces;
 using Application.Settings;
+using AutoMapper;
 using BusinessObject.Entities;
 using BusinessObject.Enums;
 using DataAccess.Extensions;
@@ -17,18 +18,21 @@ public class AuthService : IAuthService
     private readonly IJwtService _jwtService;
     private readonly IEmailService _emailService;
     private readonly BaseSettings _settings;
+    private readonly IMapper _mapper;
 
     public AuthService(
         IUnitOfWork unitOfWork,
         IJwtService jwtService,
         IEmailService emailService,
-        IOptions<BaseSettings> options
+        IOptions<BaseSettings> options,
+        IMapper mapper
     )
     {
         _unitOfWork = unitOfWork;
         _jwtService = jwtService;
         _emailService = emailService;
         _settings = options.Value;
+        _mapper = mapper;
     }
 
     public Task<Account?> GetAccountByNameOrEmailAsync(string identifier)
@@ -176,13 +180,16 @@ public class AuthService : IAuthService
         _unitOfWork.Accounts.Add(newAccount);
         await _unitOfWork.SaveChangesAsync();
 
-        return new RegisterResponse
-        {
-            Id = newAccount.Id,
-            Username = newAccount.Username,
-            DisplayName = newAccount.DisplayName,
-            DateOfBirth = newAccount.DateOfBirth,
-        };
+        var res = _mapper.Map<RegisterResponse>(newAccount);
+
+        return res;
+        // return new RegisterResponse
+        // {
+        //     Id = newAccount.Id,
+        //     Username = newAccount.Username,
+        //     DisplayName = newAccount.DisplayName,
+        //     DateOfBirth = newAccount.DateOfBirth,
+        // };
     }
 
     private Task<Account?> GetAccountByEmailVerifiedCodeAsync(string code, VerificationType type)

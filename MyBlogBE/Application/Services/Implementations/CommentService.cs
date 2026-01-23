@@ -1,5 +1,7 @@
 using Application.Dtos;
 using Application.Services.Interfaces;
+using AutoMapper;
+using AutoMapper.QueryableExtensions;
 using BusinessObject.Entities;
 using DataAccess.Extensions;
 using DataAccess.UnitOfWork;
@@ -10,10 +12,12 @@ namespace Application.Services.Implementations;
 public class CommentService : ICommentService
 {
     private readonly IUnitOfWork _unitOfWork;
+    private readonly IMapper _mapper;
 
-    public CommentService(IUnitOfWork unitOfWork)
+    public CommentService(IUnitOfWork unitOfWork, IMapper mapper)
     {
         _unitOfWork = unitOfWork;
+        _mapper = mapper;
     }
 
     public async Task<(List<GetCommentsResponse>?, DateTime?)> GetChildCommentList(
@@ -38,39 +42,43 @@ public class CommentService : ICommentService
         var commentQuery = baseQuery.OrderBy(c => c.CreatedAt).Take(pageSize + 1);
 
         var comments = await commentQuery
-            .Select(c => new GetCommentsResponse
-            {
-                Id = c.Id,
-                Content = c.Content,
-                Commenter = new AccountNameResponse
-                {
-                    Id = c.Account.Id,
-                    Username = c.Account.Username,
-                    DisplayName = c.Account.DisplayName,
-                    Avatar = c.Account.Picture != null ? c.Account.Picture.Link : string.Empty,
-                },
-                ReplyAccount =
-                    c.ReplyAccount != null
-                        ? new AccountNameResponse
-                        {
-                            Id = c.ReplyAccount.Id,
-                            Username = c.ReplyAccount.Username,
-                            DisplayName = c.ReplyAccount.DisplayName,
-                            Avatar =
-                                c.ReplyAccount.Picture != null
-                                    ? c.ReplyAccount.Picture.Link
-                                    : string.Empty,
-                        }
-                        : null,
-                CreatedAt = c.CreatedAt,
-                Pictures = c.Pictures.Select(cp => cp.Link).ToList(),
-                LikeCount = c.CommentLikes.Count(),
-                CommentCount = c.Replies.Count(),
-                IsLiked = c.CommentLikes.Any(cl => cl.AccountId == accountId),
-                PostId = c.PostId,
-                ParentCommentId = c.ParentCommentId,
-                UpdatedAt = c.UpdatedAt,
-            })
+            // .Select(c => new GetCommentsResponse
+            // {
+            //     Id = c.Id,
+            //     Content = c.Content,
+            //     Commenter = new AccountNameResponse
+            //     {
+            //         Id = c.Account.Id,
+            //         Username = c.Account.Username,
+            //         DisplayName = c.Account.DisplayName,
+            //         Avatar = c.Account.Picture != null ? c.Account.Picture.Link : string.Empty,
+            //     },
+            //     ReplyAccount =
+            //         c.ReplyAccount != null
+            //             ? new AccountNameResponse
+            //             {
+            //                 Id = c.ReplyAccount.Id,
+            //                 Username = c.ReplyAccount.Username,
+            //                 DisplayName = c.ReplyAccount.DisplayName,
+            //                 Avatar =
+            //                     c.ReplyAccount.Picture != null
+            //                         ? c.ReplyAccount.Picture.Link
+            //                         : string.Empty,
+            //             }
+            //             : null,
+            //     CreatedAt = c.CreatedAt,
+            //     Pictures = c.Pictures.Select(cp => cp.Link).ToList(),
+            //     LikeCount = c.CommentLikes.Count(),
+            //     CommentCount = c.Replies.Count(),
+            //     IsLiked = c.CommentLikes.Any(cl => cl.AccountId == accountId),
+            //     PostId = c.PostId,
+            //     ParentCommentId = c.ParentCommentId,
+            //     UpdatedAt = c.UpdatedAt,
+            // })
+            .ProjectTo<GetCommentsResponse>(
+                _mapper.ConfigurationProvider,
+                new { currentAccId = accountId }
+            )
             .ToListAsync();
 
         var hasMore = comments.Count > pageSize;
@@ -235,21 +243,32 @@ public class CommentService : ICommentService
 
         await _unitOfWork.CommitTransactionAsync();
 
-        return new GetCommentsResponse
-        {
-            Id = comment.Id,
-            Commenter = commenter,
-            Content = comment.Content,
-            ParentCommentId = comment.ParentCommentId,
-            PostId = comment.PostId,
-            ReplyAccount = replyAccount,
-            LikeCount = 0,
-            CommentCount = 0,
-            IsLiked = false,
-            Pictures = request.Pictures ?? [],
-            CreatedAt = comment.CreatedAt,
-            UpdatedAt = null,
-        };
+        var result = await _unitOfWork
+            .Comments.ReadOnly()
+            .WhereId(commentId)
+            .WhereDeletedIsNull()
+            .ProjectTo<GetCommentsResponse>(
+                _mapper.ConfigurationProvider,
+                new { currentAccId = accountId }
+            )
+            .FirstAsync();
+
+        return result;
+        // return new GetCommentsResponse
+        // {
+        //     Id = comment.Id,
+        //     Commenter = commenter,
+        //     Content = comment.Content,
+        //     ParentCommentId = comment.ParentCommentId,
+        //     PostId = comment.PostId,
+        //     ReplyAccount = replyAccount,
+        //     LikeCount = 0,
+        //     CommentCount = 0,
+        //     IsLiked = false,
+        //     Pictures = request.Pictures ?? [],
+        //     CreatedAt = comment.CreatedAt,
+        //     UpdatedAt = null,
+        // };
     }
 
     public async Task<GetCommentsResponse?> UpdateCommentAsync(
@@ -293,51 +312,63 @@ public class CommentService : ICommentService
         await _unitOfWork.SaveChangesAsync();
         await _unitOfWork.CommitTransactionAsync();
 
-        var res = await _unitOfWork
+        var result = await _unitOfWork
             .Comments.ReadOnly()
-            .WhereDeletedIsNull()
             .WhereId(commentId)
-            .WhereAccountId(accountId)
-            .Select(c => new GetCommentsResponse
-            {
-                Id = c.Id,
-                Content = c.Content,
-                CreatedAt = c.CreatedAt,
-                UpdatedAt = c.UpdatedAt,
-                ParentCommentId = c.ParentCommentId,
-                PostId = c.PostId,
-
-                CommentCount = c.Replies.Count(),
-                LikeCount = c.CommentLikes.Count(),
-                IsLiked = c.CommentLikes.Any(l => l.AccountId == accountId),
-
-                Commenter = new AccountNameResponse
-                {
-                    Id = c.Account.Id,
-                    Username = c.Account.Username,
-                    DisplayName = c.Account.DisplayName,
-                    Avatar = c.Account.Picture != null ? c.Account.Picture.Link : string.Empty,
-                },
-
-                ReplyAccount =
-                    c.ReplyAccount != null
-                        ? new AccountNameResponse
-                        {
-                            Id = c.ReplyAccount.Id,
-                            Username = c.ReplyAccount.Username,
-                            DisplayName = c.ReplyAccount.DisplayName,
-                            Avatar =
-                                c.ReplyAccount.Picture != null
-                                    ? c.ReplyAccount.Picture.Link
-                                    : string.Empty,
-                        }
-                        : null,
-
-                Pictures = c.Pictures.Select(p => p.Link).ToList(),
-            })
+            .WhereDeletedIsNull()
+            .ProjectTo<GetCommentsResponse>(
+                _mapper.ConfigurationProvider,
+                new { currentAccId = accountId }
+            )
             .FirstAsync();
 
-        return res;
+        return result;
+
+        // var res = await _unitOfWork
+        //     .Comments.ReadOnly()
+        //     .WhereDeletedIsNull()
+        //     .WhereId(commentId)
+        //     .WhereAccountId(accountId)
+        //     .Select(c => new GetCommentsResponse
+        //     {
+        //         Id = c.Id,
+        //         Content = c.Content,
+        //         CreatedAt = c.CreatedAt,
+        //         UpdatedAt = c.UpdatedAt,
+        //         ParentCommentId = c.ParentCommentId,
+        //         PostId = c.PostId,
+
+        //         CommentCount = c.Replies.Count(),
+        //         LikeCount = c.CommentLikes.Count(),
+        //         IsLiked = c.CommentLikes.Any(l => l.AccountId == accountId),
+
+        //         Commenter = new AccountNameResponse
+        //         {
+        //             Id = c.Account.Id,
+        //             Username = c.Account.Username,
+        //             DisplayName = c.Account.DisplayName,
+        //             Avatar = c.Account.Picture != null ? c.Account.Picture.Link : string.Empty,
+        //         },
+
+        //         ReplyAccount =
+        //             c.ReplyAccount != null
+        //                 ? new AccountNameResponse
+        //                 {
+        //                     Id = c.ReplyAccount.Id,
+        //                     Username = c.ReplyAccount.Username,
+        //                     DisplayName = c.ReplyAccount.DisplayName,
+        //                     Avatar =
+        //                         c.ReplyAccount.Picture != null
+        //                             ? c.ReplyAccount.Picture.Link
+        //                             : string.Empty,
+        //                 }
+        //                 : null,
+
+        //         Pictures = c.Pictures.Select(p => p.Link).ToList(),
+        //     })
+        //     .FirstAsync();
+
+        // return res;
     }
 
     public async Task<bool> DeleteCommentAsync(Guid commentId, Guid accountId)
