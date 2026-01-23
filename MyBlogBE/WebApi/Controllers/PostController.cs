@@ -1,10 +1,9 @@
 using Application.Dtos;
 using Application.Exceptions;
-using Application.Helpers;
 using Application.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using WebApi.Helpers;
+using WebApi.Attributes;
 
 namespace WebApi.Controllers;
 
@@ -31,7 +30,7 @@ public class PostController : BaseController
     /// 500 - Returns error message if exception occurs.
     /// </returns>
     [HttpGet("")]
-    [CheckStatusHelper(["active", "suspend"])]
+    [AuthorizeStatusAttribute(["active", "suspend"])]
     public async Task<IActionResult> GetPosts([FromQuery] PaginationRequest request)
     {
         var user = _jwtService.GetAccountInfo();
@@ -59,7 +58,7 @@ public class PostController : BaseController
     /// 500 - Returns error message if exception occurs.
     /// </returns>
     [HttpGet("me")]
-    [CheckStatusHelper(["active", "suspend"])]
+    [AuthorizeStatusAttribute(["active", "suspend"])]
     public async Task<IActionResult> GetMyPosts([FromQuery] PaginationRequest request)
     {
         var user = _jwtService.GetAccountInfo();
@@ -79,7 +78,7 @@ public class PostController : BaseController
     }
 
     [HttpGet("username/{username}")]
-    [CheckStatusHelper(["active", "suspend"])]
+    [AuthorizeStatusAttribute(["active", "suspend"])]
     public async Task<IActionResult> GetPostsByUsername(
         string username,
         [FromQuery] PaginationRequest request
@@ -116,7 +115,7 @@ public class PostController : BaseController
     /// 500 - Returns error message if exception occurs.
     /// </returns>
     [HttpGet("link/{link}")]
-    [CheckStatusHelper(["active", "suspend"])]
+    [AuthorizeStatusAttribute(["active", "suspend"])]
     public async Task<IActionResult> GetPostsByLink(string link)
     {
         var user = _jwtService.GetAccountInfo();
@@ -136,7 +135,7 @@ public class PostController : BaseController
     /// 500 - Returns error message if exception occurs.
     /// </returns>
     [HttpPost("{id}/like")]
-    [CheckStatusHelper(["active", "suspend"])]
+    [AuthorizeStatusAttribute(["active", "suspend"])]
     public async Task<IActionResult> LikePost(Guid id)
     {
         var user = _jwtService.GetAccountInfo();
@@ -156,7 +155,7 @@ public class PostController : BaseController
     /// 500 - Returns error message if exception occurs.
     /// </returns>
     [HttpDelete("{id}/cancel-like")]
-    [CheckStatusHelper(["active", "suspend"])]
+    [AuthorizeStatusAttribute(["active", "suspend"])]
     public async Task<IActionResult> CancelLikePost(Guid id)
     {
         var user = _jwtService.GetAccountInfo();
@@ -177,7 +176,7 @@ public class PostController : BaseController
     /// 500 - Returns error message if exception occurs.
     /// </returns>
     [HttpGet("{postId}/comments")]
-    [CheckStatusHelper(["active", "suspend"])]
+    [AuthorizeStatusAttribute(["active", "suspend"])]
     public async Task<IActionResult> GetPostComments(
         Guid postId,
         [FromQuery] PaginationRequest request
@@ -214,7 +213,7 @@ public class PostController : BaseController
     /// 500 - Returns error message if exception occurs.
     /// </returns>
     [HttpPost("")]
-    [CheckStatusHelper("active")]
+    [AuthorizeStatusAttribute("active")]
     public async Task<IActionResult> AddPost([FromBody] CreatePostRequest request)
     {
         if (string.IsNullOrWhiteSpace(request.Content) && request.Pictures.Count == 0)
@@ -230,7 +229,7 @@ public class PostController : BaseController
     }
 
     [HttpPut("{id}")]
-    [CheckStatusHelper(["active", "suspend"])]
+    [AuthorizeStatusAttribute(["active", "suspend"])]
     public async Task<IActionResult> UpdatePost(Guid id, [FromBody] UpdatePostRequest request)
     {
         if (string.IsNullOrWhiteSpace(request.Content) || request.Pictures.Count == 0)
@@ -246,7 +245,7 @@ public class PostController : BaseController
     }
 
     [HttpDelete("{id}")]
-    [CheckStatusHelper(["active", "suspend"])]
+    [AuthorizeStatusAttribute(["active", "suspend"])]
     public async Task<IActionResult> DeletePost(Guid id)
     {
         var user = _jwtService.GetAccountInfo();

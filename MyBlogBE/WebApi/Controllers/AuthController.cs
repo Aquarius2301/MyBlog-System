@@ -1,11 +1,11 @@
 using Application.Dtos;
 using Application.Exceptions;
-using Application.Helpers;
 using Application.Services.Interfaces;
 using Application.Settings;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
+using WebApi.Attributes;
 using WebApi.Helpers;
 
 namespace WebApi.Controllers;
@@ -165,7 +165,7 @@ public class AuthController : BaseController
     /// 500 - Returns error message if exception occurs.
     /// </returns>
     [HttpGet("confirm")]
-    // [CheckStatusHelper([BusinessObject.Enums.StatusType.InActive])]
+    // [AuthorizeStatusAttribute([BusinessObject.Enums.StatusType.InActive])]
     public async Task<IActionResult> ConfirmAccount(
         [FromQuery] string type,
         [FromQuery] string token
@@ -203,7 +203,7 @@ public class AuthController : BaseController
     /// 500 - Returns error message if exception occurs.
     /// </returns>
     [HttpPost("refresh")]
-    // [CheckStatusHelper([
+    // [AuthorizeStatusAttribute([
     //     BusinessObject.Enums.StatusType.Active,
     //     BusinessObject.Enums.StatusType.Suspended,
     // ])]
@@ -248,7 +248,7 @@ public class AuthController : BaseController
     /// 500 -  Returns error message if exception occurs.
     /// </returns>
     [HttpPost("forgot-password")]
-    // [CheckStatusHelper([
+    // [AuthorizeStatusAttribute([
     //     BusinessObject.Enums.StatusType.Active,
     //     BusinessObject.Enums.StatusType.Suspended,
     // ])]
@@ -300,7 +300,7 @@ public class AuthController : BaseController
     /// </returns>
     [Authorize]
     [HttpPost("logout")]
-    [CheckStatusHelper(["active", "suspend"])]
+    [AuthorizeStatusAttribute(["active", "suspend"])]
     public async Task<IActionResult> Logout()
     {
         var user = _jwtService.GetAccountInfo();

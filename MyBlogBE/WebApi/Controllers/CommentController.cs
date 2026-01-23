@@ -1,9 +1,9 @@
 using Application.Dtos;
 using Application.Exceptions;
-using Application.Helpers;
 using Application.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using WebApi.Attributes;
 using WebApi.Helpers;
 
 namespace WebApi.Controllers;
@@ -35,7 +35,7 @@ public class CommentController : BaseController
     /// 500 - Returns error message if exception occurs.
     /// </returns>
     [HttpGet("{id}")]
-    [CheckStatusHelper(["active", "suspend"])]
+    [AuthorizeStatusAttribute(["active", "suspend"])]
     public async Task<IActionResult> GetChildComments(
         Guid id,
         [FromQuery] PaginationRequest request
@@ -68,7 +68,7 @@ public class CommentController : BaseController
     /// 500 - Returns error message if exception occurs.
     /// </returns>
     [HttpPost("{id}/like")]
-    [CheckStatusHelper(["active", "suspend"])]
+    [AuthorizeStatusAttribute(["active", "suspend"])]
     public async Task<IActionResult> LikeComment(Guid id)
     {
         var user = _jwtService.GetAccountInfo();
@@ -90,7 +90,7 @@ public class CommentController : BaseController
     /// 500 - Returns error message if exception occurs.
     /// </returns>
     [HttpDelete("{id}/cancel-like")]
-    [CheckStatusHelper(["active", "suspend"])]
+    [AuthorizeStatusAttribute(["active", "suspend"])]
     public async Task<IActionResult> CancelLikeComment(Guid id)
     {
         var user = _jwtService.GetAccountInfo();
@@ -112,7 +112,7 @@ public class CommentController : BaseController
     /// 500 - Returns error message if exception occurs.
     /// </returns>
     [HttpPost]
-    [CheckStatusHelper("active")]
+    [AuthorizeStatusAttribute("active")]
     public async Task<IActionResult> AddComment([FromBody] CreateCommentRequest request)
     {
         // If ParentCommentId is provided, ReplyAccountId must also be provided, and vice versa
@@ -148,7 +148,7 @@ public class CommentController : BaseController
     /// 500 - Returns error message if exception occurs.
     /// </returns>
     [HttpPut("{id}")]
-    [CheckStatusHelper("active")]
+    [AuthorizeStatusAttribute("active")]
     public async Task<IActionResult> UpdateComment(Guid id, [FromForm] UpdateCommentRequest request)
     {
         if (!ValidationHelper.IsValidString(request.Content))
@@ -175,7 +175,7 @@ public class CommentController : BaseController
     /// 500 - Returns error message if exception occurs.
     /// </returns>
     [HttpDelete("{id}")]
-    [CheckStatusHelper(["active"])]
+    [AuthorizeStatusAttribute(["active"])]
     public async Task<IActionResult> DeleteComment(Guid id)
     {
         var user = _jwtService.GetAccountInfo();

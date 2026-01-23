@@ -1,11 +1,9 @@
 using Application.Dtos;
 using Application.Exceptions;
-using Application.Helpers;
 using Application.Services.Interfaces;
-using Application.Settings;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Options;
+using WebApi.Attributes;
 using WebApi.Helpers;
 
 namespace WebApi.Controllers;
@@ -13,7 +11,7 @@ namespace WebApi.Controllers;
 [Authorize]
 [Route("api/accounts")]
 [ApiController]
-[CheckStatusHelper(["active", "suspended"])]
+[AuthorizeStatusAttribute(["active", "suspended"])]
 public class AccountController : BaseController
 {
     private readonly IAccountService _service;

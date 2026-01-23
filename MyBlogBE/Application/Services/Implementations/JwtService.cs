@@ -73,17 +73,19 @@ public class JwtService : IJwtService
 
     public UserInfoResponse GetAccountInfo()
     {
-        var user = _httpContextAccessor.HttpContext?.User;
+        // var user = _httpContextAccessor.HttpContext?.User;
 
-        var accountId = user?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-        var accountUsername = user?.FindFirst(ClaimTypes.Name)?.Value;
-        var status = user?.FindFirst("Status")?.Value;
+        var user = _httpContextAccessor.HttpContext?.Items["CurrentUser"] as Account;
+
+        var accountId = user!.Id;
+        var accountUsername = user!.Username;
+        var status = user!.Status;
 
         return new UserInfoResponse
         {
-            Id = Guid.Parse(accountId ?? ""),
-            Username = accountUsername ?? "",
-            StatusType = status ?? "",
+            Id = accountId,
+            Username = accountUsername,
+            StatusType = status,
         };
     }
 }

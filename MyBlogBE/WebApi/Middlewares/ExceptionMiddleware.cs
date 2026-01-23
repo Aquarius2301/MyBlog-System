@@ -59,6 +59,12 @@ public class ExceptionMiddleware
                 data = forbiddenEx.Data;
                 break;
 
+            case UnauthorizedException unauthorizedEx:
+                statusCode = (int)HttpStatusCode.Unauthorized;
+                message = unauthorizedEx.Message;
+                data = unauthorizedEx.Data;
+                break;
+
             default:
                 statusCode = (int)HttpStatusCode.InternalServerError;
                 message = "Internal Server Error";
