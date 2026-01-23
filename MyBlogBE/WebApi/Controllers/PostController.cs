@@ -123,7 +123,7 @@ public class PostController : BaseController
 
         var res = await _service.GetPostByLinkAsync(link, user.Id);
 
-        return res != null ? HandleResponse(Success(res)) : throw new NotFoundException("NoPost");
+        return HandleResponse(Success(res));
     }
 
     /// <summary>
@@ -143,7 +143,7 @@ public class PostController : BaseController
 
         var res = await _service.LikePostAsync(id, user.Id);
 
-        return res != null ? HandleResponse(Success(res)) : throw new NotFoundException("NoPost");
+        return HandleResponse(Success(res));
     }
 
     /// <summary>
@@ -163,7 +163,7 @@ public class PostController : BaseController
 
         var res = await _service.CancelLikePostAsync(id, user.Id);
 
-        return res != null ? HandleResponse(Success(res)) : throw new NotFoundException("NoPost");
+        return HandleResponse(Success(res));
     }
 
     /// <summary>
@@ -191,18 +191,16 @@ public class PostController : BaseController
             request.PageSize
         );
 
-        return res.Item1 != null
-            ? HandleResponse(
-                Success(
-                    new PaginationResponse
-                    {
-                        Items = res.Item1,
-                        Cursor = res.Item2,
-                        PageSize = request.PageSize,
-                    }
-                )
+        return HandleResponse(
+            Success(
+                new PaginationResponse
+                {
+                    Items = res.Item1,
+                    Cursor = res.Item2,
+                    PageSize = request.PageSize,
+                }
             )
-            : throw new NotFoundException("NoPost");
+        );
     }
 
     /// <summary>
@@ -228,9 +226,7 @@ public class PostController : BaseController
 
         var res = await _service.AddPostAsync(request, user.Id);
 
-        return res == null
-            ? throw new BadRequestException("NoAccount")
-            : HandleResponse(Created(res));
+        return HandleResponse(Created(res));
     }
 
     [HttpPut("{id}")]
@@ -246,9 +242,7 @@ public class PostController : BaseController
 
         var res = await _service.UpdatePostAsync(request, id, user.Id);
 
-        return res == null
-            ? throw new BadRequestException("NoAccount")
-            : HandleResponse(Success(res));
+        return HandleResponse(Success(res));
     }
 
     [HttpDelete("{id}")]
@@ -259,6 +253,6 @@ public class PostController : BaseController
 
         var res = await _service.DeletePostAsync(id, user.Id);
 
-        return res ? HandleResponse(Success<object>(null)) : throw new NotFoundException("NoPost");
+        return HandleResponse(Success<object>(null));
     }
 }

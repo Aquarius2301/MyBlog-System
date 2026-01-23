@@ -1,4 +1,5 @@
 using Application.Dtos;
+using Application.Exceptions;
 using Application.Helpers;
 using Application.Services.Interfaces;
 using Application.Settings;
@@ -263,7 +264,7 @@ public class PostService : IPostService
         return (result, nextCursor);
     }
 
-    public async Task<GetPostDetailResponse?> GetPostByLinkAsync(string link, Guid accountId)
+    public async Task<GetPostDetailResponse> GetPostByLinkAsync(string link, Guid accountId)
     {
         // return await _unitOfWork
         //     .Posts.ReadOnly()
@@ -299,14 +300,15 @@ public class PostService : IPostService
         //     .FirstOrDefaultAsync();
 
         return await _unitOfWork
-            .Posts.ReadOnly()
-            .WhereDeletedIsNull()
-            .WhereLink(link)
-            .ProjectTo<GetPostDetailResponse>(
-                _mapper.ConfigurationProvider,
-                new { currentAccountId = accountId }
-            )
-            .FirstOrDefaultAsync();
+                .Posts.ReadOnly()
+                .WhereDeletedIsNull()
+                .WhereLink(link)
+                .ProjectTo<GetPostDetailResponse>(
+                    _mapper.ConfigurationProvider,
+                    new { currentAccId = accountId }
+                )
+                .FirstOrDefaultAsync()
+            ?? throw new NotFoundException("NoPost");
     }
 
     private async Task<bool> IsPostExists(Guid postId)
@@ -314,12 +316,12 @@ public class PostService : IPostService
         return await _unitOfWork.Posts.ReadOnly().WhereDeletedIsNull().WhereId(postId).AnyAsync();
     }
 
-    public async Task<int?> LikePostAsync(Guid postId, Guid accountId)
+    public async Task<int> LikePostAsync(Guid postId, Guid accountId)
     {
         var postExists = await IsPostExists(postId);
 
         if (!postExists)
-            return null;
+            throw new NotFoundException("NoPost");
 
         var alreadyLiked = await _unitOfWork
             .PostLikes.ReadOnly()
@@ -344,12 +346,12 @@ public class PostService : IPostService
         return await _unitOfWork.PostLikes.ReadOnly().WherePostId(postId).CountAsync();
     }
 
-    public async Task<int?> CancelLikePostAsync(Guid postId, Guid accountId)
+    public async Task<int> CancelLikePostAsync(Guid postId, Guid accountId)
     {
         var postExists = await IsPostExists(postId);
 
         if (!postExists)
-            return null;
+            throw new NotFoundException("NoPost");
 
         var alreadyLiked = await _unitOfWork
             .PostLikes.GetQuery()
@@ -367,7 +369,7 @@ public class PostService : IPostService
         return await _unitOfWork.PostLikes.ReadOnly().WherePostId(postId).CountAsync();
     }
 
-    public async Task<(List<GetCommentsResponse>?, DateTime?)> GetPostCommentsList(
+    public async Task<(List<GetCommentsResponse>, DateTime?)> GetPostCommentsList(
         Guid postId,
         DateTime? cursor,
         Guid accountId,
@@ -377,9 +379,7 @@ public class PostService : IPostService
         var existingPost = await IsPostExists(postId);
 
         if (!existingPost)
-        {
-            return (null, null);
-        }
+            throw new NotFoundException("NoPost");
 
         var baseQuery = _unitOfWork
             .Comments.ReadOnly()
@@ -431,207 +431,206 @@ public class PostService : IPostService
         return (result, nextCursor);
     }
 
-    public async Task<GetPostsResponse?> AddPostAsync(CreatePostRequest request, Guid accountId)
+    public async Task<GetPostsResponse> AddPostAsync(CreatePostRequest request, Guid accountId)
     {
-        var existingAccount = await _unitOfWork
-            .Accounts.ReadOnly()
-            .WhereDeletedIsNull()
-            .WhereId(accountId)
-            .Select(a => new
+        await _unitOfWork.BeginTransactionAsync();
+        try
+        {
+            var existingAccount = await _unitOfWork
+                .Accounts.ReadOnly()
+                .WhereDeletedIsNull()
+                .WhereId(accountId)
+                .AnyAsync();
+
+            if (!existingAccount)
+                throw new UnauthorizedException("NoAccount");
+
+            var post = new Post
             {
-                a.Username,
-                a.DisplayName,
-                Avatar = a.Picture != null ? a.Picture.Link : "",
-            })
-            .FirstOrDefaultAsync();
+                Id = Guid.NewGuid(),
+                Link = StringHelper.GenerateRandomString(_settings.TokenLength),
+                Content = request.Content,
+                AccountId = accountId,
+                CreatedAt = DateTime.UtcNow,
+            };
 
-        if (existingAccount == null)
-        {
-            return null;
+            _unitOfWork.Posts.Add(post);
+
+            await _unitOfWork.SaveChangesAsync();
+
+            if (request.Pictures.Count != 0)
+            {
+                await _unitOfWork
+                    .Pictures.GetQuery()
+                    .Where(p => request.Pictures.Contains(p.Link))
+                    .ExecuteUpdateAsync(p => p.SetProperty(x => x.PostId, post.Id));
+            }
+
+            await _unitOfWork.CommitTransactionAsync();
+
+            return await _unitOfWork
+                .Posts.ReadOnly()
+                .WhereId(post.Id)
+                .ProjectTo<GetPostsResponse>(
+                    _mapper.ConfigurationProvider,
+                    new { currentAccId = accountId }
+                )
+                .FirstAsync();
+
+            // return new GetPostsResponse
+            // {
+            //     Id = post.Id,
+            //     Link = post.Link,
+            //     Content = post.Content,
+            //     CreatedAt = post.CreatedAt,
+            //     UpdatedAt = post.UpdatedAt,
+
+            //     IsOwner = true,
+            //     IsLiked = false,
+
+            //     LikeCount = 0,
+            //     CommentCount = 0,
+
+            //     PostPictures = request.Pictures ?? [],
+
+            //     Author = new AccountNameResponse
+            //     {
+            //         Id = accountId,
+            //         Username = existingAccount.Username,
+            //         DisplayName = existingAccount.DisplayName,
+            //         Avatar = existingAccount.Avatar,
+            //         CreatedAt = post.CreatedAt,
+            //         IsFollowing = false,
+            //     },
+            // };
+            // return response;
         }
-
-        var post = new Post
+        catch (Exception)
         {
-            Id = Guid.NewGuid(),
-            Link = StringHelper.GenerateRandomString(_settings.TokenLength),
-            Content = request.Content,
-            AccountId = accountId,
-            CreatedAt = DateTime.UtcNow,
-        };
-
-        _unitOfWork.Posts.Add(post);
-
-        await _unitOfWork.SaveChangesAsync();
-
-        if (request.Pictures.Count != 0)
-        {
-            await _unitOfWork
-                .Pictures.GetQuery()
-                .Where(p => request.Pictures.Contains(p.Link))
-                .ExecuteUpdateAsync(p => p.SetProperty(x => x.PostId, post.Id));
+            await _unitOfWork.RollbackTransactionAsync();
+            throw;
         }
-
-        var response = await _unitOfWork
-            .Posts.ReadOnly()
-            .WhereId(post.Id)
-            .ProjectTo<GetPostsResponse>(
-                _mapper.ConfigurationProvider,
-                new { currentAccId = accountId }
-            )
-            .FirstOrDefaultAsync();
-
-        // return new GetPostsResponse
-        // {
-        //     Id = post.Id,
-        //     Link = post.Link,
-        //     Content = post.Content,
-        //     CreatedAt = post.CreatedAt,
-        //     UpdatedAt = post.UpdatedAt,
-
-        //     IsOwner = true,
-        //     IsLiked = false,
-
-        //     LikeCount = 0,
-        //     CommentCount = 0,
-
-        //     PostPictures = request.Pictures ?? [],
-
-        //     Author = new AccountNameResponse
-        //     {
-        //         Id = accountId,
-        //         Username = existingAccount.Username,
-        //         DisplayName = existingAccount.DisplayName,
-        //         Avatar = existingAccount.Avatar,
-        //         CreatedAt = post.CreatedAt,
-        //         IsFollowing = false,
-        //     },
-        // };
-
-        return response;
     }
 
-    public async Task<GetPostsResponse?> UpdatePostAsync(
+    public async Task<GetPostsResponse> UpdatePostAsync(
         UpdatePostRequest request,
         Guid postId,
         Guid accountId
     )
     {
-        var existingPost = await _unitOfWork
-            .Posts.GetQuery()
-            .WhereDeletedIsNull()
-            .WhereId(postId)
-            .WhereAccountId(accountId)
-            .Select(p => new
-            {
-                p.Id,
-                p.Link,
-                p.CreatedAt,
-                p.PostLikes,
-                p.Comments,
-            })
-            .FirstOrDefaultAsync();
-
-        if (existingPost == null)
+        await _unitOfWork.BeginTransactionAsync();
+        try
         {
-            return null;
-        }
+            var existingPost =
+                await _unitOfWork
+                    .Posts.GetQuery()
+                    .WhereDeletedIsNull()
+                    .WhereId(postId)
+                    .WhereAccountId(accountId)
+                    .FirstOrDefaultAsync()
+                ?? throw new NotFoundException("NoPost");
 
-        var updateTime = DateTime.UtcNow;
+            var updateTime = DateTime.UtcNow;
 
-        await _unitOfWork
-            .Posts.GetQuery()
-            .Where(p => p.Id == postId)
-            .ExecuteUpdateAsync(setters =>
-                setters
-                    .SetProperty(p => p.Content, request.Content)
-                    .SetProperty(p => p.UpdatedAt, updateTime)
-            );
+            await _unitOfWork
+                .Posts.GetQuery()
+                .Where(p => p.Id == postId)
+                .ExecuteUpdateAsync(setters =>
+                    setters
+                        .SetProperty(p => p.Content, request.Content)
+                        .SetProperty(p => p.UpdatedAt, updateTime)
+                );
 
-        await _unitOfWork
-            .Pictures.GetQuery()
-            .WherePostId(postId)
-            .ExecuteUpdateAsync(p => p.SetProperty(x => x.PostId, (Guid?)null));
-
-        if (request.Pictures?.Count > 0)
-        {
             await _unitOfWork
                 .Pictures.GetQuery()
-                .Where(p => request.Pictures.Contains(p.Link))
-                .ExecuteUpdateAsync(p => p.SetProperty(x => x.PostId, postId));
-        }
+                .WherePostId(postId)
+                .ExecuteUpdateAsync(p => p.SetProperty(x => x.PostId, (Guid?)null));
 
-        var author = await _unitOfWork
-            .Accounts.ReadOnly()
-            .Where(a => a.Id == accountId)
-            .Select(a => new AccountNameResponse
+            if (request.Pictures?.Count > 0)
             {
-                Username = a.Username,
-                DisplayName = a.DisplayName,
-                Avatar = a.Picture != null ? a.Picture.Link : "",
-                CreatedAt = a.CreatedAt,
-            })
-            .FirstAsync();
+                await _unitOfWork
+                    .Pictures.GetQuery()
+                    .Where(p => request.Pictures.Contains(p.Link))
+                    .ExecuteUpdateAsync(p => p.SetProperty(x => x.PostId, postId));
+            }
 
-        var response = await _unitOfWork
-            .Posts.ReadOnly()
-            .WhereId(postId)
-            .ProjectTo<GetPostsResponse>(
-                _mapper.ConfigurationProvider,
-                new { currentAccId = accountId }
-            )
-            .FirstOrDefaultAsync();
+            await _unitOfWork.CommitTransactionAsync();
 
-        //   IsLiked = existingPost.PostLikes.Any(l => l.AccountId == accountId),
+            return await _unitOfWork
+                .Posts.ReadOnly()
+                .WhereId(postId)
+                .ProjectTo<GetPostsResponse>(
+                    _mapper.ConfigurationProvider,
+                    new { currentAccId = accountId }
+                )
+                .FirstAsync();
 
-        // return new GetPostsResponse
-        // {
-        //     Id = existingPost.Id,
-        //     Link = existingPost.Link,
-        //     Content = request.Content,
-        //     CreatedAt = existingPost.CreatedAt,
-        //     UpdatedAt = updateTime,
+            //   IsLiked = existingPost.PostLikes.Any(l => l.AccountId == accountId),
 
-        //     IsOwner = true,
-        //     IsLiked = existingPost.PostLikes.Any(l => l.AccountId == accountId),
+            // return new GetPostsResponse
+            // {
+            //     Id = existingPost.Id,
+            //     Link = existingPost.Link,
+            //     Content = request.Content,
+            //     CreatedAt = existingPost.CreatedAt,
+            //     UpdatedAt = updateTime,
 
-        //     LikeCount = existingPost.PostLikes.Count,
-        //     CommentCount = existingPost.Comments.Count,
+            //     IsOwner = true,
+            //     IsLiked = existingPost.PostLikes.Any(l => l.AccountId == accountId),
 
-        //     PostPictures = request.Pictures ?? [],
+            //     LikeCount = existingPost.PostLikes.Count,
+            //     CommentCount = existingPost.Comments.Count,
 
-        //     Author = new AccountNameResponse
-        //     {
-        //         Id = accountId,
-        //         Username = author.Username,
-        //         DisplayName = author.DisplayName,
-        //         Avatar = author.Avatar,
-        //         CreatedAt = author.CreatedAt,
-        //         IsFollowing = false,
-        //     },
-        // };
+            //     PostPictures = request.Pictures ?? [],
 
-        return response;
+            //     Author = new AccountNameResponse
+            //     {
+            //         Id = accountId,
+            //         Username = author.Username,
+            //         DisplayName = author.DisplayName,
+            //         Avatar = author.Avatar,
+            //         CreatedAt = author.CreatedAt,
+            //         IsFollowing = false,
+            //     },
+            // };
+
+            // return response;
+        }
+        catch (Exception)
+        {
+            throw;
+        }
     }
 
     public async Task<bool> DeletePostAsync(Guid postId, Guid accountId)
     {
-        var deletedAt = DateTime.UtcNow;
+        await _unitOfWork.BeginTransactionAsync();
+        try
+        {
+            var deletedAt = DateTime.UtcNow;
 
-        var affectedRows = await _unitOfWork
-            .Posts.GetQuery()
-            .WhereDeletedIsNull()
-            .WhereId(postId)
-            .WhereAccountId(accountId)
-            .ExecuteUpdateAsync(setters => setters.SetProperty(p => p.DeletedAt, deletedAt));
+            var affectedRows = await _unitOfWork
+                .Posts.GetQuery()
+                .WhereDeletedIsNull()
+                .WhereId(postId)
+                .WhereAccountId(accountId)
+                .ExecuteUpdateAsync(setters => setters.SetProperty(p => p.DeletedAt, deletedAt));
 
-        if (affectedRows == 0)
-            return false;
+            if (affectedRows == 0)
+                throw new NotFoundException("NoPost");
 
-        await _unitOfWork
-            .Pictures.GetQuery()
-            .WherePostId(postId)
-            .ExecuteUpdateAsync(setters => setters.SetProperty(p => p.PostId, (Guid?)null));
+            await _unitOfWork
+                .Pictures.GetQuery()
+                .WherePostId(postId)
+                .ExecuteUpdateAsync(setters => setters.SetProperty(p => p.PostId, (Guid?)null));
 
-        return true;
+            await _unitOfWork.CommitTransactionAsync();
+            return true;
+        }
+        catch (Exception)
+        {
+            await _unitOfWork.RollbackTransactionAsync();
+            throw;
+        }
     }
 }
