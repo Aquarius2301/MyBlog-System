@@ -1,4 +1,5 @@
 using Application.Dtos;
+using Application.Exceptions;
 using Application.Helpers;
 using Application.Services.Interfaces;
 using Application.Settings;
@@ -17,18 +18,22 @@ public class AccountService : IAccountService
     private readonly BaseSettings _baseSettings;
     private readonly IEmailService _emailService;
     private readonly IMapper _mapper;
+    private readonly IJwtService _jwtService;
+    private Guid AccountId => _jwtService.GetAccountInfo().Id;
 
     public AccountService(
         IUnitOfWork unitOfWork,
         IEmailService emailService,
         IOptions<BaseSettings> options,
-        IMapper mapper
+        IMapper mapper,
+        IJwtService jwtService
     )
     {
         _unitOfWork = unitOfWork;
         _emailService = emailService;
         _baseSettings = options.Value;
         _mapper = mapper;
+        _jwtService = jwtService;
     }
 
     public async Task<(List<AccountNameResponse>, DateTime?)> GetAccountByNameAsync(
@@ -58,7 +63,7 @@ public class AccountService : IAccountService
             // })
             .ProjectTo<AccountNameResponse>(
                 _mapper.ConfigurationProvider,
-                new { currentAccId = Guid.Empty } // Has not following info here (fix later)
+                new { currentAccId = AccountId } // Has not following info here (fix later)
             )
             .ToListAsync();
 
@@ -69,72 +74,83 @@ public class AccountService : IAccountService
         return (result, nextCursor);
     }
 
-    public async Task<AccountResponse?> GetProfileByIdAsync(Guid accountId)
+    public async Task<AccountResponse> GetProfileByIdAsync(Guid accountId = default)
     {
-        var account = await _unitOfWork
-            .Accounts.ReadOnly()
-            .WhereId(accountId)
-            // .Select(a => new AccountResponse
-            // {
-            //     Id = a.Id,
-            //     Username = a.Username,
-            //     Email = a.Email,
-            //     IsOwner = a.Id == accountId,
-            //     Language = a.Language.ToString(),
-            //     DisplayName = a.DisplayName,
-            //     DateOfBirth = a.DateOfBirth,
-            //     AvatarUrl = a.Picture != null ? a.Picture.Link : "",
-            //     Status = a.Status.ToString(),
-            //     CreatedAt = a.CreatedAt,
-            // })
-            .ProjectTo<AccountResponse>(
-                _mapper.ConfigurationProvider,
-                new { currentAccId = accountId }
-            )
-            .FirstOrDefaultAsync();
-
-        return account;
-    }
-
-    public async Task<AccountResponse?> GetProfileByUsernameAsync(string username, Guid userId)
-    {
-        var account = await _unitOfWork
-            .Accounts.ReadOnly()
-            .WhereUsername(username)
-            // .Select(a => new AccountResponse
-            // {
-            //     Id = a.Id,
-            //     Username = a.Username,
-            //     Email = a.Email,
-            //     IsOwner = a.Id == userId,
-            //     DisplayName = a.DisplayName,
-            //     DateOfBirth = a.DateOfBirth,
-            //     AvatarUrl = a.Picture != null ? a.Picture.Link : "",
-            //     Status = a.Status.ToString(),
-            //     CreatedAt = a.CreatedAt,
-            // })
-            .ProjectTo<AccountResponse>(
-                _mapper.ConfigurationProvider,
-                new { currentAccId = userId }
-            )
-            .FirstOrDefaultAsync();
-
-        return account;
-    }
-
-    public async Task<AccountResponse?> UpdateAccountAsync(
-        Guid accountId,
-        UpdateAccountRequest request
-    )
-    {
-        var account = await _unitOfWork
-            .Accounts.ReadOnly()
-            .FirstOrDefaultAsync(a => a.Id == accountId && a.DeletedAt == null);
-
-        if (account == null)
+        if (accountId == default)
         {
-            return null;
+            accountId = AccountId;
         }
+
+        var account =
+            await _unitOfWork
+                .Accounts.ReadOnly()
+                .WhereId(accountId)
+                // .Select(a => new AccountResponse
+                // {
+                //     Id = a.Id,
+                //     Username = a.Username,
+                //     Email = a.Email,
+                //     IsOwner = a.Id == accountId,
+                //     Language = a.Language.ToString(),
+                //     DisplayName = a.DisplayName,
+                //     DateOfBirth = a.DateOfBirth,
+                //     AvatarUrl = a.Picture != null ? a.Picture.Link : "",
+                //     Status = a.Status.ToString(),
+                //     CreatedAt = a.CreatedAt,
+                // })
+                .ProjectTo<AccountResponse>(
+                    _mapper.ConfigurationProvider,
+                    new { currentAccId = AccountId }
+                )
+                .FirstOrDefaultAsync()
+            ?? throw new NotFoundException("NoAccount");
+
+        return account;
+    }
+
+    public async Task<AccountResponse> GetProfileByUsernameAsync(string username)
+    {
+        var account =
+            await _unitOfWork
+                .Accounts.ReadOnly()
+                .WhereUsername(username)
+                // .Select(a => new AccountResponse
+                // {
+                //     Id = a.Id,
+                //     Username = a.Username,
+                //     Email = a.Email,
+                //     IsOwner = a.Id == userId,
+                //     DisplayName = a.DisplayName,
+                //     DateOfBirth = a.DateOfBirth,
+                //     AvatarUrl = a.Picture != null ? a.Picture.Link : "",
+                //     Status = a.Status.ToString(),
+                //     CreatedAt = a.CreatedAt,
+                // })
+                .ProjectTo<AccountResponse>(
+                    _mapper.ConfigurationProvider,
+                    new { currentAccId = AccountId }
+                )
+                .FirstOrDefaultAsync()
+            ?? throw new NotFoundException("NoAccount");
+
+        return account;
+    }
+
+    public async Task<AccountResponse> UpdateAccountAsync(UpdateAccountRequest request)
+    {
+        var account = await _unitOfWork
+            .Accounts.GetQuery()
+            .WhereId(AccountId)
+            .WhereDeletedIsNull()
+            .FirstAsync();
+        // if (account == null)
+        // {
+        //     return null;
+        // }
+
+        if (request.Username != null)
+            if (await _unitOfWork.Accounts.ReadOnly().WhereUsername(request.Username).AnyAsync())
+                throw new BadRequestException("UsernameExists");
 
         var updateTime = DateTime.UtcNow;
         account.Username = request.Username ?? account.Username;
@@ -162,82 +178,78 @@ public class AccountService : IAccountService
         // };
     }
 
-    public async Task<bool> ChangePasswordAsync(Guid accountId, string password)
+    public async Task ChangePasswordAsync(string password)
     {
         var account = await _unitOfWork
             .Accounts.GetQuery()
-            .WhereId(accountId)
+            .WhereId(AccountId)
             .WhereDeletedIsNull()
-            .FirstOrDefaultAsync();
+            .FirstAsync();
 
-        if (account == null)
-        {
-            return false;
-        }
+        // if (account == null)
+        // {
+        //     return false;
+        // }
 
         account.HashedPassword = PasswordHasherHelper.HashPassword(password);
         await _unitOfWork.SaveChangesAsync();
-
-        return true;
     }
 
-    public async Task<bool> IsPasswordCorrectAsync(Guid accountId, string password)
+    public async Task<bool> IsPasswordCorrectAsync(string password)
     {
         var account = await _unitOfWork
             .Accounts.ReadOnly()
-            .WhereId(accountId)
+            .WhereId(AccountId)
             .WhereDeletedIsNull()
-            .FirstOrDefaultAsync();
+            .FirstAsync();
 
-        return account != null
-            && PasswordHasherHelper.VerifyPassword(password, account.HashedPassword);
+        return PasswordHasherHelper.VerifyPassword(password, account.HashedPassword);
     }
 
-    public async Task<bool> ChangeAvatarAsync(Guid accountId, string avatarFile)
+    public async Task ChangeAvatarAsync(string avatarFile)
     {
         //Check if account exists
         var account = await _unitOfWork
             .Accounts.ReadOnly()
             .Include(a => a.Picture)
-            .WhereId(accountId)
+            .WhereId(AccountId)
             .WhereDeletedIsNull()
             .FirstOrDefaultAsync();
 
-        if (account == null)
-        {
-            return false;
-        }
+        // if (account == null)
+        // {
+        //     return false;
+        // }
 
         var picture = await _unitOfWork
             .Pictures.GetQuery()
             .WhereLink(avatarFile)
-            .ExecuteUpdateAsync(p => p.SetProperty(p => p.AccountId, accountId));
+            .ExecuteUpdateAsync(p => p.SetProperty(p => p.AccountId, AccountId));
 
         await _unitOfWork.SaveChangesAsync();
-
-        return true;
     }
 
-    public async Task<DateTime?> SelfRemoveAccount(Guid accountId)
+    public async Task<DateTime> SelfRemoveAccount()
     {
         var account = await _unitOfWork
             .Accounts.GetQuery()
-            .WhereId(accountId)
+            .WhereId(AccountId)
             .WhereDeletedIsNull()
             .WhereSelfRemoveTimeIsNull()
-            .FirstOrDefaultAsync();
+            .FirstAsync();
 
-        if (account == null)
-        {
-            return null;
-        }
+        // if (account == null)
+        // {
+        //     return null;
+        // }
+        var selfRemoveTime = DateTime.UtcNow.AddDays(_baseSettings.SelfRemoveDurationDays);
 
-        account.SelfRemoveTime = DateTime.UtcNow.AddDays(_baseSettings.SelfRemoveDurationDays);
+        account.SelfRemoveTime = selfRemoveTime;
 
         await _emailService.SendAccountRemovalEmailAsync(account.Email);
 
         await _unitOfWork.SaveChangesAsync();
 
-        return account.SelfRemoveTime;
+        return selfRemoveTime;
     }
 }
