@@ -18,17 +18,24 @@ public class PostService : IPostService
     private readonly IUnitOfWork _unitOfWork;
     private readonly BaseSettings _settings;
     private readonly IMapper _mapper;
+    private readonly IJwtService _jwtService;
+    private Guid AccountId => _jwtService.GetAccountInfo().Id;
 
-    public PostService(IUnitOfWork unitOfWork, IOptions<BaseSettings> options, IMapper mapper)
+    public PostService(
+        IUnitOfWork unitOfWork,
+        IOptions<BaseSettings> options,
+        IMapper mapper,
+        IJwtService jwtService
+    )
     {
         _unitOfWork = unitOfWork;
         _settings = options.Value;
         _mapper = mapper;
+        _jwtService = jwtService;
     }
 
     public async Task<(List<GetPostsResponse>, DateTime?)> GetPostsListAsync(
         DateTime? cursor,
-        Guid accountId,
         int pageSize
     )
     {
@@ -92,7 +99,7 @@ public class PostService : IPostService
             // })
             .ProjectTo<GetPostsResponse>(
                 _mapper.ConfigurationProvider,
-                new { currentAccId = accountId }
+                new { currentAccId = AccountId }
             )
             .ToListAsync();
 
@@ -107,14 +114,14 @@ public class PostService : IPostService
 
     public async Task<(List<GetPostsResponse>, DateTime?)> GetMyPostsListAsync(
         DateTime? cursor,
-        Guid accountId,
+        // Guid accountId,
         int pageSize
     )
     {
         var baseQuery = _unitOfWork
             .Posts.ReadOnly()
             .WhereDeletedIsNull()
-            .WhereAccountId(accountId)
+            .WhereAccountId(AccountId)
             .WhereIf(cursor.HasValue, q => q.WhereCursorLessThan(cursor!.Value));
 
         var postsQuery = baseQuery.OrderByDescending(p => p.CreatedAt).Take(pageSize + 1);
@@ -170,7 +177,7 @@ public class PostService : IPostService
             // })
             .ProjectTo<GetPostsResponse>(
                 _mapper.ConfigurationProvider,
-                new { currentAccId = accountId }
+                new { currentAccId = AccountId }
             )
             .ToListAsync();
 
@@ -183,13 +190,22 @@ public class PostService : IPostService
         return (result, nextCursor);
     }
 
-    public async Task<(List<GetPostsResponse>, DateTime?)> GetPostsByUsername(
+    public async Task<(List<GetPostsResponse>, DateTime?)> GetPostsByUsernameAsync(
         string username,
         DateTime? cursor,
-        Guid accountId,
+        // Guid accountId,
         int pageSize
     )
     {
+        var existingUser = await _unitOfWork
+            .Accounts.ReadOnly()
+            .WhereDeletedIsNull()
+            .WhereUsername(username)
+            .AnyAsync();
+
+        if (!existingUser)
+            throw new NotFoundException("NoAccount");
+
         var baseQuery = _unitOfWork
             .Posts.ReadOnly()
             .WhereDeletedIsNull()
@@ -251,7 +267,7 @@ public class PostService : IPostService
             // })
             .ProjectTo<GetPostsResponse>(
                 _mapper.ConfigurationProvider,
-                new { currentAccId = accountId }
+                new { currentAccId = AccountId }
             )
             .ToListAsync();
 
@@ -264,8 +280,10 @@ public class PostService : IPostService
         return (result, nextCursor);
     }
 
-    public async Task<GetPostDetailResponse> GetPostByLinkAsync(string link, Guid accountId)
+    public async Task<GetPostDetailResponse> GetPostByLinkAsync(string link)
     {
+        var accountId = _jwtService.GetAccountInfo().Id;
+
         // return await _unitOfWork
         //     .Posts.ReadOnly()
         //     .WhereDeletedIsNull()
@@ -305,7 +323,7 @@ public class PostService : IPostService
                 .WhereLink(link)
                 .ProjectTo<GetPostDetailResponse>(
                     _mapper.ConfigurationProvider,
-                    new { currentAccId = accountId }
+                    new { currentAccId = AccountId }
                 )
                 .FirstOrDefaultAsync()
             ?? throw new NotFoundException("NoPost");
@@ -316,7 +334,7 @@ public class PostService : IPostService
         return await _unitOfWork.Posts.ReadOnly().WhereDeletedIsNull().WhereId(postId).AnyAsync();
     }
 
-    public async Task<int> LikePostAsync(Guid postId, Guid accountId)
+    public async Task<int> LikePostAsync(Guid postId)
     {
         var postExists = await IsPostExists(postId);
 
@@ -325,7 +343,7 @@ public class PostService : IPostService
 
         var alreadyLiked = await _unitOfWork
             .PostLikes.ReadOnly()
-            .WhereAccountId(accountId)
+            .WhereAccountId(AccountId)
             .WherePostId(postId)
             .AnyAsync();
 
@@ -335,7 +353,7 @@ public class PostService : IPostService
                 new PostLike
                 {
                     PostId = postId,
-                    AccountId = accountId,
+                    AccountId = AccountId,
                     CreatedAt = DateTime.UtcNow,
                 }
             );
@@ -346,7 +364,7 @@ public class PostService : IPostService
         return await _unitOfWork.PostLikes.ReadOnly().WherePostId(postId).CountAsync();
     }
 
-    public async Task<int> CancelLikePostAsync(Guid postId, Guid accountId)
+    public async Task<int> CancelLikePostAsync(Guid postId)
     {
         var postExists = await IsPostExists(postId);
 
@@ -355,7 +373,7 @@ public class PostService : IPostService
 
         var alreadyLiked = await _unitOfWork
             .PostLikes.GetQuery()
-            .WhereAccountId(accountId)
+            .WhereAccountId(AccountId)
             .WherePostId(postId)
             .FirstOrDefaultAsync();
 
@@ -369,10 +387,10 @@ public class PostService : IPostService
         return await _unitOfWork.PostLikes.ReadOnly().WherePostId(postId).CountAsync();
     }
 
-    public async Task<(List<GetCommentsResponse>, DateTime?)> GetPostCommentsList(
+    public async Task<(List<GetCommentsResponse>, DateTime?)> GetPostCommentsListAsync(
         Guid postId,
         DateTime? cursor,
-        Guid accountId,
+        // Guid accountId,
         int pageSize
     )
     {
@@ -418,7 +436,7 @@ public class PostService : IPostService
             // })
             .ProjectTo<GetCommentsResponse>(
                 _mapper.ConfigurationProvider,
-                new { currentAccId = accountId }
+                new { currentAccId = AccountId }
             )
             .ToList();
 
@@ -431,26 +449,28 @@ public class PostService : IPostService
         return (result, nextCursor);
     }
 
-    public async Task<GetPostsResponse> AddPostAsync(CreatePostRequest request, Guid accountId)
+    public async Task<GetPostsResponse> AddPostAsync(CreatePostRequest request)
     {
         await _unitOfWork.BeginTransactionAsync();
         try
         {
-            var existingAccount = await _unitOfWork
-                .Accounts.ReadOnly()
-                .WhereDeletedIsNull()
-                .WhereId(accountId)
-                .AnyAsync();
+            // Already checked in the middleware
 
-            if (!existingAccount)
-                throw new UnauthorizedException("NoAccount");
+            // var existingAccount = await _unitOfWork
+            //     .Accounts.ReadOnly()
+            //     .WhereDeletedIsNull()
+            //     .WhereId(accountId)
+            //     .AnyAsync();
+
+            // if (!existingAccount)
+            //     throw new UnauthorizedException("NoAccount");
 
             var post = new Post
             {
                 Id = Guid.NewGuid(),
                 Link = StringHelper.GenerateRandomString(_settings.TokenLength),
                 Content = request.Content,
-                AccountId = accountId,
+                AccountId = AccountId,
                 CreatedAt = DateTime.UtcNow,
             };
 
@@ -473,7 +493,7 @@ public class PostService : IPostService
                 .WhereId(post.Id)
                 .ProjectTo<GetPostsResponse>(
                     _mapper.ConfigurationProvider,
-                    new { currentAccId = accountId }
+                    new { currentAccId = AccountId }
                 )
                 .FirstAsync();
 
@@ -512,11 +532,7 @@ public class PostService : IPostService
         }
     }
 
-    public async Task<GetPostsResponse> UpdatePostAsync(
-        UpdatePostRequest request,
-        Guid postId,
-        Guid accountId
-    )
+    public async Task<GetPostsResponse> UpdatePostAsync(UpdatePostRequest request, Guid postId)
     {
         await _unitOfWork.BeginTransactionAsync();
         try
@@ -526,7 +542,7 @@ public class PostService : IPostService
                     .Posts.GetQuery()
                     .WhereDeletedIsNull()
                     .WhereId(postId)
-                    .WhereAccountId(accountId)
+                    .WhereAccountId(AccountId)
                     .FirstOrDefaultAsync()
                 ?? throw new NotFoundException("NoPost");
 
@@ -561,7 +577,7 @@ public class PostService : IPostService
                 .WhereId(postId)
                 .ProjectTo<GetPostsResponse>(
                     _mapper.ConfigurationProvider,
-                    new { currentAccId = accountId }
+                    new { currentAccId = AccountId }
                 )
                 .FirstAsync();
 
@@ -602,7 +618,7 @@ public class PostService : IPostService
         }
     }
 
-    public async Task<bool> DeletePostAsync(Guid postId, Guid accountId)
+    public async Task DeletePostAsync(Guid postId)
     {
         await _unitOfWork.BeginTransactionAsync();
         try
@@ -613,7 +629,7 @@ public class PostService : IPostService
                 .Posts.GetQuery()
                 .WhereDeletedIsNull()
                 .WhereId(postId)
-                .WhereAccountId(accountId)
+                .WhereAccountId(AccountId)
                 .ExecuteUpdateAsync(setters => setters.SetProperty(p => p.DeletedAt, deletedAt));
 
             if (affectedRows == 0)
@@ -625,7 +641,6 @@ public class PostService : IPostService
                 .ExecuteUpdateAsync(setters => setters.SetProperty(p => p.PostId, (Guid?)null));
 
             await _unitOfWork.CommitTransactionAsync();
-            return true;
         }
         catch (Exception)
         {
