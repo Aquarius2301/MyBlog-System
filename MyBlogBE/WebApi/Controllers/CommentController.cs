@@ -14,14 +14,10 @@ namespace WebApi.Controllers;
 public class CommentController : BaseController
 {
     private readonly ICommentService _service;
-    private readonly ILanguageService _lang;
-    private readonly IJwtService _jwtService;
 
-    public CommentController(ICommentService service, ILanguageService lang, IJwtService jwtService)
+    public CommentController(ICommentService service)
     {
         _service = service;
-        _lang = lang;
-        _jwtService = jwtService;
     }
 
     /// <summary>
@@ -41,21 +37,18 @@ public class CommentController : BaseController
         [FromQuery] PaginationRequest request
     )
     {
-        var user = _jwtService.GetAccountInfo();
-        var res = await _service.GetChildCommentList(id, request.Cursor, user.Id, request.PageSize);
+        var res = await _service.GetChildCommentList(id, request.Cursor, request.PageSize);
 
-        return res.Item1 != null
-            ? HandleResponse(
-                Success(
-                    new PaginationResponse
-                    {
-                        Items = res.Item1,
-                        Cursor = res.Item2,
-                        PageSize = request.PageSize,
-                    }
-                )
+        return HandleResponse(
+            Success(
+                new PaginationResponse
+                {
+                    Items = res.Item1,
+                    Cursor = res.Item2,
+                    PageSize = request.PageSize,
+                }
             )
-            : throw new NotFoundException("NoComment");
+        );
     }
 
     /// <summary>
@@ -71,13 +64,9 @@ public class CommentController : BaseController
     [AuthorizeStatusAttribute(["active", "suspend"])]
     public async Task<IActionResult> LikeComment(Guid id)
     {
-        var user = _jwtService.GetAccountInfo();
+        var res = await _service.LikeCommentAsync(id);
 
-        var res = await _service.LikeCommentAsync(id, user.Id);
-
-        return res.HasValue
-            ? HandleResponse(Success(res.Value))
-            : throw new NotFoundException("NoComment");
+        return HandleResponse(Success(res));
     }
 
     /// <summary>
@@ -93,13 +82,9 @@ public class CommentController : BaseController
     [AuthorizeStatusAttribute(["active", "suspend"])]
     public async Task<IActionResult> CancelLikeComment(Guid id)
     {
-        var user = _jwtService.GetAccountInfo();
+        var res = await _service.CancelLikeCommentAsync(id);
 
-        var res = await _service.CancelLikeCommentAsync(id, user.Id);
-
-        return res.HasValue
-            ? HandleResponse(Success(res.Value))
-            : throw new NotFoundException("NoComment");
+        return HandleResponse(Success(res));
     }
 
     /// <summary>
@@ -122,18 +107,14 @@ public class CommentController : BaseController
         if (request.ParentCommentId == null && request.ReplyAccountId != null)
             throw new BadRequestException("ParentCommentRequired");
 
-        if (!ValidationHelper.IsValidString(request.Content))
+        if (string.IsNullOrWhiteSpace(request.Content) && request.Pictures.Count == 0)
         {
-            throw new BadRequestException("InvalidContent");
+            throw new BadRequestException("CommentAndPictureEmpty");
         }
 
-        var user = _jwtService.GetAccountInfo();
+        var res = await _service.AddCommentAsync(request);
 
-        var res = await _service.AddCommentAsync(user.Id, request);
-
-        return res != null
-            ? HandleResponse(Success(res))
-            : throw new BadRequestException("AddCommentFailed");
+        return HandleResponse(Success(res));
     }
 
     /// <summary>
@@ -151,18 +132,14 @@ public class CommentController : BaseController
     [AuthorizeStatusAttribute("active")]
     public async Task<IActionResult> UpdateComment(Guid id, [FromForm] UpdateCommentRequest request)
     {
-        if (!ValidationHelper.IsValidString(request.Content))
+        if (string.IsNullOrWhiteSpace(request.Content) && request.Pictures.Count == 0)
         {
-            throw new BadRequestException("InvalidContent");
+            throw new BadRequestException("CommentAndPictureEmpty");
         }
 
-        var user = _jwtService.GetAccountInfo();
+        var res = await _service.UpdateCommentAsync(id, request);
 
-        var res = await _service.UpdateCommentAsync(id, request, user.Id);
-
-        return res != null
-            ? HandleResponse(Success(res))
-            : throw new NotFoundException("NoComment");
+        return HandleResponse(Success(res));
     }
 
     /// <summary>
@@ -178,12 +155,8 @@ public class CommentController : BaseController
     [AuthorizeStatusAttribute(["active"])]
     public async Task<IActionResult> DeleteComment(Guid id)
     {
-        var user = _jwtService.GetAccountInfo();
+        await _service.DeleteCommentAsync(id);
 
-        var res = await _service.DeleteCommentAsync(id, user.Id);
-
-        return res
-            ? HandleResponse(Success("CommentDeleted"))
-            : throw new NotFoundException("NoComment");
+        return HandleResponse(Success("CommentDeleted"));
     }
 }

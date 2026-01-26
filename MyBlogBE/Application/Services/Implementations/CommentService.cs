@@ -1,4 +1,5 @@
 using Application.Dtos;
+using Application.Exceptions;
 using Application.Services.Interfaces;
 using AutoMapper;
 using AutoMapper.QueryableExtensions;
@@ -13,17 +14,19 @@ public class CommentService : ICommentService
 {
     private readonly IUnitOfWork _unitOfWork;
     private readonly IMapper _mapper;
+    private readonly IJwtService _jwtService;
+    private Guid AccountId => _jwtService.GetAccountInfo().Id;
 
-    public CommentService(IUnitOfWork unitOfWork, IMapper mapper)
+    public CommentService(IUnitOfWork unitOfWork, IMapper mapper, IJwtService jwtService)
     {
         _unitOfWork = unitOfWork;
         _mapper = mapper;
+        _jwtService = jwtService;
     }
 
-    public async Task<(List<GetCommentsResponse>?, DateTime?)> GetChildCommentList(
+    public async Task<(List<GetCommentsResponse>, DateTime?)> GetChildCommentList(
         Guid commentId,
         DateTime? cursor,
-        Guid accountId,
         int pageSize
     )
     {
@@ -36,7 +39,7 @@ public class CommentService : ICommentService
 
         if (!await baseQuery.AnyAsync())
         {
-            return (null, null);
+            throw new NotFoundException("NoComment");
         }
 
         var commentQuery = baseQuery.OrderBy(c => c.CreatedAt).Take(pageSize + 1);
@@ -77,7 +80,7 @@ public class CommentService : ICommentService
             // })
             .ProjectTo<GetCommentsResponse>(
                 _mapper.ConfigurationProvider,
-                new { currentAccId = accountId }
+                new { currentAccId = AccountId }
             )
             .ToListAsync();
 
@@ -99,19 +102,19 @@ public class CommentService : ICommentService
             .AnyAsync();
     }
 
-    public async Task<int?> LikeCommentAsync(Guid commentId, Guid accountId)
+    public async Task<int> LikeCommentAsync(Guid commentId)
     {
         var existingComment = await IsCommentsExists(commentId);
 
         if (!existingComment)
         {
-            return null;
+            throw new NotFoundException("NoComment");
         }
 
         var existingLike = await _unitOfWork
             .CommentLikes.GetQuery()
             .WhereCommentId(commentId)
-            .WhereAccountId(accountId)
+            .WhereAccountId(AccountId)
             .FirstOrDefaultAsync();
 
         if (existingLike == null)
@@ -120,7 +123,7 @@ public class CommentService : ICommentService
                 new CommentLike
                 {
                     CommentId = commentId,
-                    AccountId = accountId,
+                    AccountId = AccountId,
                     CreatedAt = DateTime.UtcNow,
                 }
             );
@@ -131,19 +134,19 @@ public class CommentService : ICommentService
         return await _unitOfWork.CommentLikes.ReadOnly().WhereCommentId(commentId).CountAsync();
     }
 
-    public async Task<int?> CancelLikeCommentAsync(Guid commentId, Guid accountId)
+    public async Task<int> CancelLikeCommentAsync(Guid commentId)
     {
         var existingComment = await IsCommentsExists(commentId);
 
         if (!existingComment)
         {
-            return null;
+            throw new NotFoundException("NoComment");
         }
 
         var existingLike = await _unitOfWork
             .CommentLikes.GetQuery()
             .WhereCommentId(commentId)
-            .WhereAccountId(accountId)
+            .WhereAccountId(AccountId)
             .FirstOrDefaultAsync();
 
         if (existingLike != null)
@@ -155,56 +158,53 @@ public class CommentService : ICommentService
         return await _unitOfWork.CommentLikes.ReadOnly().WhereCommentId(commentId).CountAsync();
     }
 
-    public async Task<GetCommentsResponse?> AddCommentAsync(
-        Guid accountId,
-        CreateCommentRequest request
-    )
+    public async Task<GetCommentsResponse> AddCommentAsync(CreateCommentRequest request)
     {
-        var post = await _unitOfWork
-            .Posts.ReadOnly()
-            .WhereDeletedIsNull()
-            .WhereId(request.PostId)
-            .FirstOrDefaultAsync();
-
-        if (post == null)
-            return null;
+        var post =
+            await _unitOfWork
+                .Posts.ReadOnly()
+                .WhereDeletedIsNull()
+                .WhereId(request.PostId)
+                .FirstOrDefaultAsync()
+            ?? throw new NotFoundException("NoPost");
 
         if (request.ParentCommentId != null)
         {
-            var parentComment = await _unitOfWork
-                .Comments.ReadOnly()
-                .WhereDeletedIsNull()
-                .WherePostId(request.PostId)
-                .WhereId(request.ParentCommentId.Value)
-                .FirstOrDefaultAsync();
-
-            if (parentComment == null)
-                return null;
+            var parentComment =
+                await _unitOfWork
+                    .Comments.ReadOnly()
+                    .WhereDeletedIsNull()
+                    .WherePostId(request.PostId)
+                    .WhereId(request.ParentCommentId.Value)
+                    .FirstOrDefaultAsync()
+                ?? throw new NotFoundException("NoParentComment");
         }
 
         AccountNameResponse? replyAccount = null;
 
         if (request.ReplyAccountId != null)
         {
-            replyAccount = await _unitOfWork
-                .Accounts.ReadOnly()
-                .WhereId(request.ReplyAccountId.Value)
-                .Select(a => new AccountNameResponse
-                {
-                    Id = a.Id,
-                    Username = a.Username,
-                    DisplayName = a.DisplayName,
-                    Avatar = a.Picture != null ? a.Picture.Link : string.Empty,
-                })
-                .FirstOrDefaultAsync();
+            replyAccount =
+                await _unitOfWork
+                    .Accounts.ReadOnly()
+                    .WhereId(request.ReplyAccountId.Value)
+                    .Select(a => new AccountNameResponse
+                    {
+                        Id = a.Id,
+                        Username = a.Username,
+                        DisplayName = a.DisplayName,
+                        Avatar = a.Picture != null ? a.Picture.Link : string.Empty,
+                    })
+                    .FirstOrDefaultAsync()
+                ?? throw new NotFoundException("NoReplyAccount");
 
-            if (replyAccount == null)
-                return null;
+            // if (replyAccount == null)
+            //     return null;
         }
 
         var commenter = await _unitOfWork
             .Accounts.ReadOnly()
-            .WhereId(accountId)
+            .WhereId(AccountId)
             .Select(a => new AccountNameResponse
             {
                 Id = a.Id,
@@ -249,7 +249,7 @@ public class CommentService : ICommentService
             .WhereDeletedIsNull()
             .ProjectTo<GetCommentsResponse>(
                 _mapper.ConfigurationProvider,
-                new { currentAccId = accountId }
+                new { currentAccId = AccountId }
             )
             .FirstAsync();
 
@@ -271,22 +271,21 @@ public class CommentService : ICommentService
         // };
     }
 
-    public async Task<GetCommentsResponse?> UpdateCommentAsync(
+    public async Task<GetCommentsResponse> UpdateCommentAsync(
         Guid commentId,
-        UpdateCommentRequest request,
-        Guid accountId
+        UpdateCommentRequest request
     )
     {
         var existingComment = await _unitOfWork
             .Comments.GetQuery()
             .WhereDeletedIsNull()
             .WhereId(commentId)
-            .WhereAccountId(accountId)
+            .WhereAccountId(AccountId)
             .FirstOrDefaultAsync();
 
         if (existingComment == null)
         {
-            return null;
+            throw new NotFoundException("NoComment");
         }
 
         await _unitOfWork.BeginTransactionAsync();
@@ -318,7 +317,7 @@ public class CommentService : ICommentService
             .WhereDeletedIsNull()
             .ProjectTo<GetCommentsResponse>(
                 _mapper.ConfigurationProvider,
-                new { currentAccId = accountId }
+                new { currentAccId = AccountId }
             )
             .FirstAsync();
 
@@ -371,19 +370,16 @@ public class CommentService : ICommentService
         // return res;
     }
 
-    public async Task<bool> DeleteCommentAsync(Guid commentId, Guid accountId)
+    public async Task DeleteCommentAsync(Guid commentId)
     {
-        var existingComment = await _unitOfWork
-            .Comments.GetQuery()
-            .WhereDeletedIsNull()
-            .WhereId(commentId)
-            .WhereAccountId(accountId)
-            .FirstOrDefaultAsync();
-
-        if (existingComment == null)
-        {
-            return false;
-        }
+        var existingComment =
+            await _unitOfWork
+                .Comments.GetQuery()
+                .WhereDeletedIsNull()
+                .WhereId(commentId)
+                .WhereAccountId(AccountId)
+                .FirstOrDefaultAsync()
+            ?? throw new NotFoundException("NoComment");
 
         await _unitOfWork.BeginTransactionAsync();
 
@@ -397,7 +393,5 @@ public class CommentService : ICommentService
         await _unitOfWork.SaveChangesAsync();
 
         await _unitOfWork.CommitTransactionAsync();
-
-        return true;
     }
 }
