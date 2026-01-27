@@ -1,6 +1,6 @@
-using Application.Dtos;
 using Application.Services.Interfaces;
 using Microsoft.AspNetCore.Mvc;
+using WebApi.Attributes;
 using WebApi.Helpers;
 
 namespace WebApi.Controllers
@@ -22,6 +22,7 @@ namespace WebApi.Controllers
         }
 
         [HttpPost("")]
+        [AuthorizeStatusAttribute("active")]
         public async Task<IActionResult> UploadPicture([FromForm] FormRequest request)
         {
             // Placeholder implementation for file upload

@@ -7,13 +7,6 @@ namespace Application.Services.Interfaces;
 /// </summary>
 public interface ICommentService
 {
-    // /// <summary>
-    // /// Gets a comment by its unique identifier.
-    // /// </summary>
-    // /// <param name="commentId">The unique identifier of the comment.</param>
-    // /// <returns> A <see cref="Comment"/> with the specified ID if found; otherwise, null.</returns>
-    // Task<Comment?> GetByIdAsync(Guid commentId);
-
     /// <summary>
     /// Gets a paginated list of replies for a specific parent comment.
     /// </summary>
@@ -26,10 +19,10 @@ public interface ICommentService
     /// The list is null if the parent comment does not exist.
     /// The cursor is null if there are no more child comments to load.
     /// </returns>
-    Task<(List<GetCommentsResponse>?, DateTime?)> GetChildCommentList(
+    /// <exception cref="NotFoundException">Thrown when the parent comment does not exist.</exception>
+    Task<(List<GetCommentsResponse>, DateTime?)> GetChildCommentList(
         Guid commentId,
         DateTime? cursor,
-        Guid accountId,
         int pageSize
     );
 
@@ -37,50 +30,44 @@ public interface ICommentService
     /// Likes a comment for the given user.
     /// </summary>
     /// <param name="commentId">The ID of the comment to like.</param>
-    /// <param name="accountId">The ID of the user performing the like.</param>
     /// <returns>
     /// The number of likes after the like action if succeeded,
-    /// Null if the comment does not exist.
     /// </returns>
-    Task<int?> LikeCommentAsync(Guid commentId, Guid accountId);
+    /// <exception cref="NotFoundException">Thrown when the comment does not exist.</exception>
+    Task<int> LikeCommentAsync(Guid commentId);
 
     /// <summary>
     /// Removes a like from a comment for the given user.
     /// </summary>
     /// <param name="commentId">The ID of the comment to unlike.</param>
-    /// <param name="accountId">The ID of the user performing the action.</param>
     /// <returns>
     /// The number of likes after the unlike action if succeeded,
-    /// Null if the comment does not exist.
     /// </returns>
-    Task<int?> CancelLikeCommentAsync(Guid commentId, Guid accountId);
+    /// <exception cref="NotFoundException">Thrown when the comment does not exist.</exception>
+    Task<int> CancelLikeCommentAsync(Guid commentId);
 
     /// <summary>
     /// Adds a new comment.
     /// </summary>
-    /// <param name="accountId">The ID of the user adding the comment.</param>
     /// <param name="request">The details of the comment to add.</param>
-    /// <returns> A <see cref="GetCommentsResponse"/> objects, null if failed</returns>
-    Task<GetCommentsResponse?> AddCommentAsync(Guid accountId, CreateCommentRequest request);
+    /// <returns> A <see cref="GetCommentsResponse"/> objects/returns>
+    /// <exception cref="NotFoundException">Thrown when the post or parent comment does not exist.</exception>
+    Task<GetCommentsResponse> AddCommentAsync(CreateCommentRequest request);
 
     /// <summary>
     /// Updates an existing comment.
     /// </summary>
     /// <param name="commentId">The ID of the comment to update.</param>
     /// <param name="request">The updated comment details.</param>
-    /// <param name="accountId">The ID of the user performing the update.</param>
-    /// <returns> A <see cref="GetCommentsResponse"/> objects, null if failed</returns>
-    Task<GetCommentsResponse?> UpdateCommentAsync(
-        Guid commentId,
-        UpdateCommentRequest request,
-        Guid accountId
-    );
+    /// <returns> A <see cref="GetCommentsResponse"/> objects/returns>
+    /// <exception cref="NotFoundException">Thrown when the comment does not exist.</exception>
+    Task<GetCommentsResponse> UpdateCommentAsync(Guid commentId, UpdateCommentRequest request);
 
     /// <summary>
     /// Deletes a comment.
     /// </summary>
     /// <param name="commentId">The ID of the comment to delete.</param>
-    /// <param name="accountId">The ID of the user performing the deletion.</param
-    /// <returns> True if deletion succeeded, false otherwise.</returns>
-    Task<bool> DeleteCommentAsync(Guid commentId, Guid accountId);
+    /// <returns>A task performs the deletion operation.</returns>
+    /// <exception cref="NotFoundException">Thrown when the comment does not exist.</exception>
+    Task DeleteCommentAsync(Guid commentId);
 }

@@ -69,6 +69,8 @@ app.UseCors("_myAllowSpecificOrigins");
 
 app.UseAuthentication();
 
+app.UseMiddleware<UserValidationMiddleware>();
+
 app.UseAuthorization();
 
 app.MapControllers();

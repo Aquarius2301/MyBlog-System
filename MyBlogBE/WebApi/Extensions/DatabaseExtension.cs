@@ -16,8 +16,18 @@ public static class DatabaseExtension
         IConfiguration configuration
     )
     {
-        services.AddDbContext<MyBlogContext>(options =>
-            options.UseSqlServer(configuration.GetConnectionString("DefaultConnection"))
+        services.AddDbContext<MyBlogContext>(
+            (serviceProvider, options) =>
+            {
+                var env = serviceProvider.GetRequiredService<IWebHostEnvironment>();
+
+                options.UseSqlServer(configuration.GetConnectionString("DefaultConnection"));
+
+                if (env.IsDevelopment())
+                {
+                    options.EnableSensitiveDataLogging();
+                }
+            }
         );
 
         return services;

@@ -14,6 +14,8 @@ public static class ApplicationExtension
     /// <returns></returns>
     public static IServiceCollection AddApplicationServices(this IServiceCollection services)
     {
+        services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
+
         services.AddTransient<IJwtService, JwtService>();
         services.AddTransient<IEmailService, EmailService>();
         services.AddTransient<IUploadService, UploadService>();

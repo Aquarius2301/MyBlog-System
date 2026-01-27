@@ -1,11 +1,9 @@
 using Application.Dtos;
 using Application.Exceptions;
-using Application.Helpers;
 using Application.Services.Interfaces;
-using Application.Settings;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Options;
+using WebApi.Attributes;
 using WebApi.Helpers;
 
 namespace WebApi.Controllers;
@@ -13,52 +11,74 @@ namespace WebApi.Controllers;
 [Authorize]
 [Route("api/accounts")]
 [ApiController]
-[CheckStatusHelper(["active", "suspended"])]
+[AuthorizeStatusAttribute(["active", "suspended"])]
 public class AccountController : BaseController
 {
     private readonly IAccountService _service;
-    private readonly IJwtService _jwtService;
 
-    public AccountController(IAccountService service, IJwtService jwtService)
+    public AccountController(IAccountService service)
     {
         _service = service;
-        _jwtService = jwtService;
     }
 
+    /// <summary>
+    /// Get my profile information
+    /// </summary>
+    /// <returns>
+    /// 200 - Returns profile of the account.
+    /// 500 - Returns error message if exception occurs.
+    /// </returns>
     [HttpGet("profile/me")]
     public async Task<IActionResult> GetMyProfile()
     {
-        var user = _jwtService.GetAccountInfo();
+        var account = await _service.GetProfileByIdAsync();
 
-        var account = await _service.GetProfileByIdAsync(user.Id);
-
-        return account == null
-            ? throw new NotFoundException("NoAccount")
-            : HandleResponse(Success(account));
+        return HandleResponse(Success(account));
     }
 
+    /// <summary>
+    /// Get profile information by account ID
+    /// </summary>
+    /// <param name="id">The unique identifier of the account</param>
+    /// <returns>
+    /// 200 - Returns profile of the account.
+    /// 404 - Returns error if the account does not exist.
+    /// 500 - Returns error message if exception occurs.
+    /// </returns>
     [HttpGet("profile/{id}")]
     public async Task<IActionResult> GetProfile(Guid id)
     {
         var account = await _service.GetProfileByIdAsync(id);
 
-        return account == null
-            ? throw new NotFoundException("NoAccount")
-            : HandleResponse(Success(account));
+        return HandleResponse(Success(account));
     }
 
+    /// <summary>
+    /// Get profile information by username
+    /// </summary>
+    /// <param name="username">The username of the account</param>
+    /// <returns>
+    /// 200 - Returns profile of the account.
+    /// 404 - Returns error if the account does not exist.
+    /// 500 - Returns error message if exception occurs.
+    /// </returns>
     [HttpGet("profile/username/{username}")]
     public async Task<IActionResult> GetProfileByUsername(string username)
     {
-        var user = _jwtService.GetAccountInfo();
+        var account = await _service.GetProfileByUsernameAsync(username);
 
-        var account = await _service.GetProfileByUsernameAsync(username, user.Id);
-
-        return account == null
-            ? throw new NotFoundException("NoAccount")
-            : HandleResponse(Success(account));
+        return HandleResponse(Success(account));
     }
 
+    /// <summary>
+    /// Get accounts by name with pagination
+    /// </summary>
+    /// <param name="name">The name to search for</param>
+    /// <param name="pagination">Pagination parameters</param>
+    /// <returns>
+    /// 200 - Returns accounts matching the name with pagination.
+    /// 500 - Returns error message if exception occurs.
+    /// </returns>
     [HttpGet("")]
     public async Task<IActionResult> GetAccountName(
         [FromQuery] string name,
@@ -83,29 +103,59 @@ public class AccountController : BaseController
         );
     }
 
+    /// <summary>
+    /// Update my profile information
+    /// </summary>
+    /// <param name="request">The update account request data</param>
+    /// <returns>
+    /// 200 - Returns the updated profile of the account.
+    /// 400 - Returns error if the request data is invalid.
+    /// 500 - Returns error message if exception occurs.
+    /// </returns>
     [HttpPut("profile/me")]
     public async Task<IActionResult> UpdateMyProfile([FromBody] UpdateAccountRequest request)
     {
-        var user = _jwtService.GetAccountInfo();
+        var errors = new Dictionary<string, string>();
 
-        var res = await _service.UpdateAccountAsync(user.Id, request);
+        if (
+            request.Username != null
+            && !ValidationHelper.IsValidString(request.Username, true, 3, 20)
+        )
+            errors["username"] = "UsernameInvalid";
 
-        return res != null
-            ? HandleResponse(Success(res))
-            : throw new NotFoundException("NoAccount");
+        if (
+            request.DisplayName != null
+            && !ValidationHelper.IsValidString(request.DisplayName, false, 3, 50)
+        )
+            errors["displayName"] = "DisplayNameLength";
+
+        if (errors.Count > 0)
+        {
+            throw new BadRequestException("UpdateAccountFailed", errors);
+        }
+        var res = await _service.UpdateAccountAsync(request);
+
+        return HandleResponse(Success(res));
     }
 
+    /// <summary>
+    /// Change my password
+    /// </summary>
+    /// <param name="request">The update password request data</param>
+    /// <returns>
+    /// 200 - Returns success if the password is changed successfully.
+    /// 400 - Returns error if the old password is incorrect, the new password is not valid or same as the old password.
+    /// 500 - Returns error message if exception occurs.
+    /// </returns>
     [HttpPut("profile/me/change-password")]
     public async Task<IActionResult> ChangeMyPassword([FromBody] UpdatePasswordRequest request)
     {
-        var user = _jwtService.GetAccountInfo();
-
         var errors = new Dictionary<string, string>();
 
         // Check if the old password is correct
         if (
             string.IsNullOrWhiteSpace(request.OldPassword) // empty check
-            || !await _service.IsPasswordCorrectAsync(user.Id, request.OldPassword) // correct check
+            || !await _service.IsPasswordCorrectAsync(request.OldPassword) // correct check
         )
         {
             errors["OldPassword"] = "OldPasswordIncorrect";
@@ -128,31 +178,38 @@ public class AccountController : BaseController
             return BadRequest(new ApiResponse<object?>(400, "PasswordChangeFailed", errors));
         }
 
-        var res = await _service.ChangePasswordAsync(user.Id, request.NewPassword);
+        await _service.ChangePasswordAsync(request.NewPassword);
 
-        return res
-            ? HandleResponse(Success<object>(null, "PasswordChanged"))
-            : BadRequest(new ApiResponse<object?>(400, "PasswordChangeFailed"));
+        return HandleResponse(Success<object>(null, "PasswordChanged"));
     }
 
+    /// <summary>
+    /// Change my avatar
+    /// </summary>
+    /// <param name="request">The change avatar request data</param>
+    /// <returns>
+    /// 200 - Returns success if the avatar is changed successfully.
+    /// 500 - Returns error message if exception occurs.
+    /// </returns>
     [HttpPut("profile/me/change-avatar")]
     public async Task<IActionResult> ChangeMyAvatar([FromBody] ChangeAvatarRequest request)
     {
-        var user = _jwtService.GetAccountInfo();
+        await _service.ChangeAvatarAsync(request.Picture);
 
-        var res = await _service.ChangeAvatarAsync(user.Id, request.Picture);
-
-        return res
-            ? HandleResponse(Success<object>(null, "AvatarChanged"))
-            : NotFound(new ApiResponse<object?>(404, "AvatarChangeFailed"));
+        return HandleResponse(Success<object>(null, "AvatarChanged"));
     }
 
+    /// <summary>
+    /// Self remove my account
+    /// </summary>
+    /// <returns>
+    /// 200 - Returns the time when the account will be permanently deleted.
+    /// 500 - Returns error message if exception occurs.
+    /// </returns>
     [HttpPut("profile/me/self-remove")]
     public async Task<IActionResult> SelfRemoveMyAccount()
     {
-        var user = _jwtService.GetAccountInfo();
-
-        var res = await _service.SelfRemoveAccount(user.Id);
+        var res = await _service.SelfRemoveAccount();
 
         // if (res != null)
         // {
@@ -161,8 +218,6 @@ public class AccountController : BaseController
         //     return ApiResponse.Success(content);
         // }
 
-        return res != null
-            ? HandleResponse(Success(res))
-            : NotFound(new ApiResponse<object?>(404, "AccountNotFound"));
+        return HandleResponse(Success(res));
     }
 }

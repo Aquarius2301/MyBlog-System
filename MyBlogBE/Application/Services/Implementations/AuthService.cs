@@ -1,7 +1,9 @@
 using Application.Dtos;
+using Application.Exceptions;
 using Application.Helpers;
 using Application.Services.Interfaces;
 using Application.Settings;
+using AutoMapper;
 using BusinessObject.Entities;
 using BusinessObject.Enums;
 using DataAccess.Extensions;
@@ -17,45 +19,59 @@ public class AuthService : IAuthService
     private readonly IJwtService _jwtService;
     private readonly IEmailService _emailService;
     private readonly BaseSettings _settings;
+    private readonly IMapper _mapper;
 
     public AuthService(
         IUnitOfWork unitOfWork,
         IJwtService jwtService,
         IEmailService emailService,
-        IOptions<BaseSettings> options
+        IOptions<BaseSettings> options,
+        IMapper mapper
     )
     {
         _unitOfWork = unitOfWork;
         _jwtService = jwtService;
         _emailService = emailService;
         _settings = options.Value;
+        _mapper = mapper;
     }
 
-    public Task<Account?> GetAccountByNameOrEmailAsync(string identifier)
-    {
-        var query = _unitOfWork
-            .Accounts.GetQuery()
-            .WhereDeletedIsNull()
-            .WhereUsernameOrEmail(identifier);
+    // public Task<Account> GetAccountByNameOrEmailAsync(string identifier)
+    // {
+    //     var query =
+    //         _unitOfWork
+    //             .Accounts.GetQuery()
+    //             .WhereDeletedIsNull()
+    //             .WhereUsernameOrEmail(identifier)
+    //             .FirstAsync()
+    //         ?? throw new Exception("NoAccount");
 
-        return query.FirstOrDefaultAsync();
-    }
+    //     return query;
+    // }
 
     public Task<Account?> GetAccountByUsernameAsync(string username)
     {
-        var query = _unitOfWork.Accounts.ReadOnly().WhereUsername(username).WhereDeletedIsNull();
+        var account = _unitOfWork
+            .Accounts.ReadOnly()
+            .WhereUsername(username)
+            .WhereDeletedIsNull()
+            .FirstOrDefaultAsync();
 
-        return query.FirstOrDefaultAsync();
+        return account;
     }
 
     public Task<Account?> GetAccountByEmailAsync(string email)
     {
-        var query = _unitOfWork.Accounts.ReadOnly().WhereEmail(email).WhereDeletedIsNull();
+        var account = _unitOfWork
+            .Accounts.ReadOnly()
+            .WhereEmail(email)
+            .WhereDeletedIsNull()
+            .FirstOrDefaultAsync();
 
-        return query.FirstOrDefaultAsync();
+        return account;
     }
 
-    public async Task<AuthResponse?> GetAuthenticateAsync(string username, string password)
+    public async Task<AuthResponse> GetAuthenticateAsync(string username, string password)
     {
         var account = await _unitOfWork
             .Accounts.GetQuery()
@@ -68,7 +84,7 @@ public class AuthService : IAuthService
             || !PasswordHasherHelper.VerifyPassword(password, account.HashedPassword)
         )
         {
-            return null;
+            throw new NotFoundException("NoAccount");
         }
 
         account.AccessToken = _jwtService.GenerateAccessToken(account);
@@ -87,55 +103,35 @@ public class AuthService : IAuthService
         };
     }
 
-    public async Task<AuthResponse?> GetRefreshTokenAsync(string refreshToken)
+    public async Task<AuthResponse> GetRefreshTokenAsync(string refreshToken)
     {
-        var account = await _unitOfWork
-            .Accounts.GetQuery()
-            .WhereRefreshToken(refreshToken)
-            .WhereDeletedIsNull()
-            .FirstOrDefaultAsync();
+        var account =
+            await _unitOfWork
+                .Accounts.GetQuery()
+                .WhereRefreshToken(refreshToken)
+                .WhereDeletedIsNull()
+                .FirstOrDefaultAsync()
+            ?? throw new UnauthorizedException("NoAccount");
 
-        if (account != null)
+        // if (account != null)
+        // {
+        if (
+            account.RefreshToken != null
+            && account.RefreshTokenExpiryTime != null
+            && account.RefreshTokenExpiryTime >= DateTime.UtcNow
+        )
         {
-            if (
-                account.RefreshToken != null
-                && account.RefreshTokenExpiryTime != null
-                && account.RefreshTokenExpiryTime >= DateTime.UtcNow
-            )
+            account.AccessToken = _jwtService.GenerateAccessToken(account);
+
+            await _unitOfWork.SaveChangesAsync();
+
+            return new AuthResponse
             {
-                account.AccessToken = _jwtService.GenerateAccessToken(account);
-
-                await _unitOfWork.SaveChangesAsync();
-
-                return new AuthResponse
-                {
-                    AccessToken = account.AccessToken,
-                    RefreshToken = account.RefreshToken,
-                };
-            }
-            else
-            {
-                account.AccessToken = null;
-                account.RefreshToken = null;
-                account.RefreshTokenExpiryTime = null;
-
-                await _unitOfWork.SaveChangesAsync();
-
-                return null;
-            }
+                AccessToken = account.AccessToken,
+                RefreshToken = account.RefreshToken,
+            };
         }
-
-        return null;
-    }
-
-    public async Task<bool> RemoveRefresh(Guid accountId)
-    {
-        var account = await _unitOfWork
-            .Accounts.GetQuery()
-            .WhereId(accountId)
-            .FirstOrDefaultAsync();
-
-        if (account != null)
+        else
         {
             account.AccessToken = null;
             account.RefreshToken = null;
@@ -143,10 +139,24 @@ public class AuthService : IAuthService
 
             await _unitOfWork.SaveChangesAsync();
 
-            return true;
+            throw new UnauthorizedException("Unauthorized");
         }
+        // }
 
-        return false;
+        // return null;
+    }
+
+    public async Task RemoveRefreshAsync()
+    {
+        var accountId = _jwtService.GetAccountInfo().Id;
+
+        var account = await _unitOfWork.Accounts.GetQuery().WhereId(accountId).FirstAsync();
+
+        account.AccessToken = null;
+        account.RefreshToken = null;
+        account.RefreshTokenExpiryTime = null;
+
+        await _unitOfWork.SaveChangesAsync();
     }
 
     public async Task<RegisterResponse> RegisterAccountAsync(RegisterRequest request)
@@ -176,33 +186,39 @@ public class AuthService : IAuthService
         _unitOfWork.Accounts.Add(newAccount);
         await _unitOfWork.SaveChangesAsync();
 
-        return new RegisterResponse
-        {
-            Id = newAccount.Id,
-            Username = newAccount.Username,
-            DisplayName = newAccount.DisplayName,
-            DateOfBirth = newAccount.DateOfBirth,
-        };
+        var res = _mapper.Map<RegisterResponse>(newAccount);
+
+        return res;
+        // return new RegisterResponse
+        // {
+        //     Id = newAccount.Id,
+        //     Username = newAccount.Username,
+        //     DisplayName = newAccount.DisplayName,
+        //     DateOfBirth = newAccount.DateOfBirth,
+        // };
     }
 
-    private Task<Account?> GetAccountByEmailVerifiedCodeAsync(string code, VerificationType type)
+    private async Task<Account?> GetAccountByEmailVerifiedCodeAsync(
+        string code,
+        VerificationType type
+    )
     {
-        var query = _unitOfWork
+        var account = await _unitOfWork
             .Accounts.GetQuery()
             .WhereEmailVerifiedCode(code)
-            .WhereVerificationType(type);
+            .WhereVerificationType(type)
+            .FirstOrDefaultAsync();
 
-        return query.FirstOrDefaultAsync();
+        return account;
     }
 
-    public async Task<bool> ConfirmRegisterAccountAsync(string confirmCode)
+    public async Task ConfirmRegisterAccountAsync(string confirmCode)
     {
-        var account = await GetAccountByEmailVerifiedCodeAsync(
-            confirmCode,
-            VerificationType.Register
-        );
+        var account =
+            await GetAccountByEmailVerifiedCodeAsync(confirmCode, VerificationType.Register)
+            ?? throw new BadRequestException("InvalidToken");
 
-        if (account != null && DateTime.UtcNow <= account.EmailVerifiedCodeExpiry)
+        if (DateTime.UtcNow <= account.EmailVerifiedCodeExpiry)
         {
             account.EmailVerifiedCode = null;
             account.VerificationType = null;
@@ -210,20 +226,20 @@ public class AuthService : IAuthService
             account.Status = StatusType.Active.Code;
 
             await _unitOfWork.SaveChangesAsync();
-            return true;
         }
-
-        return false;
+        else
+        {
+            throw new BadRequestException("InvalidToken");
+        }
     }
 
-    public async Task<string?> ConfirmForgotPasswordAccountAsync(string confirmCode)
+    public async Task<string> ConfirmForgotPasswordAccountAsync(string confirmCode)
     {
-        var account = await GetAccountByEmailVerifiedCodeAsync(
-            confirmCode,
-            VerificationType.ForgotPassword
-        );
+        var account =
+            await GetAccountByEmailVerifiedCodeAsync(confirmCode, VerificationType.ForgotPassword)
+            ?? throw new BadRequestException("InvalidToken");
 
-        if (account != null && DateTime.UtcNow <= account.EmailVerifiedCodeExpiry)
+        if (DateTime.UtcNow <= account.EmailVerifiedCodeExpiry)
         {
             account.VerificationType = VerificationType.ChangePassword;
             account.EmailVerifiedCodeExpiry = null;
@@ -232,17 +248,19 @@ public class AuthService : IAuthService
             return confirmCode;
         }
 
-        return null;
+        throw new BadRequestException("InvalidToken");
     }
 
-    public async Task<bool> ForgotPasswordAsync(string identifier)
+    public async Task ForgotPasswordAsync(string identifier)
     {
         var tokenTimeout = _settings.TokenExpiryMinutes;
-        var account = await _unitOfWork
-            .Accounts.GetQuery()
-            .WhereDeletedIsNull()
-            .WhereUsernameOrEmail(identifier)
-            .FirstOrDefaultAsync();
+        var account =
+            await _unitOfWork
+                .Accounts.GetQuery()
+                .WhereDeletedIsNull()
+                .WhereUsernameOrEmail(identifier)
+                .FirstOrDefaultAsync()
+            ?? throw new BadRequestException("NoAccount");
 
         if (account != null)
         {
@@ -258,18 +276,14 @@ public class AuthService : IAuthService
             account.EmailVerifiedCodeExpiry = DateTime.UtcNow.AddMinutes(tokenTimeout);
 
             await _unitOfWork.SaveChangesAsync();
-            return true;
         }
-
-        return false;
     }
 
-    public async Task<bool> ResetPasswordAsync(string confirmCode, string newPassowrd)
+    public async Task ResetPasswordAsync(string confirmCode, string newPassowrd)
     {
-        var account = await GetAccountByEmailVerifiedCodeAsync(
-            confirmCode,
-            VerificationType.ChangePassword
-        );
+        var account =
+            await GetAccountByEmailVerifiedCodeAsync(confirmCode, VerificationType.ChangePassword)
+            ?? throw new BadRequestException("InvalidToken");
 
         if (account != null)
         {
@@ -279,10 +293,6 @@ public class AuthService : IAuthService
             account.HashedPassword = PasswordHasherHelper.HashPassword(newPassowrd);
 
             await _unitOfWork.SaveChangesAsync();
-
-            return true;
         }
-
-        return false;
     }
 }

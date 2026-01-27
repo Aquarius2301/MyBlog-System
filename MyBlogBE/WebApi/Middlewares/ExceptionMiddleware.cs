@@ -42,26 +42,31 @@ public class ExceptionMiddleware
         switch (exception)
         {
             case BadRequestException badRequestEx:
-                statusCode = (int)HttpStatusCode.BadRequest; // Trả về lỗi 400
+                statusCode = (int)HttpStatusCode.BadRequest;
                 message = badRequestEx.Message;
                 data = badRequestEx.Data;
                 break;
 
             case NotFoundException notFoundEx:
-                statusCode = (int)HttpStatusCode.NotFound; // Trả về lỗi 404
+                statusCode = (int)HttpStatusCode.NotFound;
                 message = notFoundEx.Message;
                 data = notFoundEx.Data;
                 break;
 
             case ForbiddenException forbiddenEx:
-                statusCode = (int)HttpStatusCode.Forbidden; // Trả về lỗi 403
+                statusCode = (int)HttpStatusCode.Forbidden;
                 message = forbiddenEx.Message;
                 data = forbiddenEx.Data;
                 break;
 
-            // Thêm các loại Exception khác nếu cần
+            case UnauthorizedException unauthorizedEx:
+                statusCode = (int)HttpStatusCode.Unauthorized;
+                message = unauthorizedEx.Message;
+                data = unauthorizedEx.Data;
+                break;
+
             default:
-                statusCode = (int)HttpStatusCode.InternalServerError; // Trả về lỗi 500
+                statusCode = (int)HttpStatusCode.InternalServerError;
                 message = "Internal Server Error";
                 break;
         }
@@ -74,7 +79,7 @@ public class ExceptionMiddleware
         {
             PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
         };
-        var json = JsonSerializer.Serialize(response, options);
+        // var json = JsonSerializer.Serialize(response, options);
 
         return context.Response.WriteAsJsonAsync(response, options);
     }

@@ -51,6 +51,12 @@ public interface IUnitOfWork
     Task CommitTransactionAsync();
 
     /// <summary>
+    /// Rolls back the current database transaction.
+    /// </summary>
+    /// <returns></returns>
+    Task RollbackTransactionAsync();
+
+    /// <summary>
     /// Saves all changes made in the context to the database.
     /// </summary>
     /// <returns>The number of state entries written to the database.</returns>

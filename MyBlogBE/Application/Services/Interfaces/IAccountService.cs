@@ -10,19 +10,17 @@ public interface IAccountService
     /// <summary>
     /// Change or add account avatar.
     /// </summary>
-    /// <param name="accountId">The unique identifier of the account.</param>
     /// <param name="avatarFile">The new avatar file.</param>
-    /// <returns> A <see cref="ImageDto"/> contains image data if the avatar was successfully changed;
-    /// otherwise, null.</returns>
-    Task<bool> ChangeAvatarAsync(Guid accountId, string avatarFile);
+    /// <returns>A task that represents the asynchronous change avatar operation.</returns>
+    /// <exception cref="NotFoundException">Thrown when the account does not exist.</exception>
+    Task ChangeAvatarAsync(string avatarFile);
 
     /// <summary>
     /// Change account password.
     /// </summary>
-    /// <param name="accountId">The unique identifier of the account.</param>
     /// <param name="password">The new password.</param>
-    /// <returns>True if the password was successfully changed; otherwise, false.</returns>
-    Task<bool> ChangePasswordAsync(Guid accountId, string password);
+    /// <returns>A task that represents the asynchronous change password operation.</returns>
+    Task ChangePasswordAsync(string password);
 
     /// <summary>
     /// Get accounts by name with pagination.
@@ -40,33 +38,37 @@ public interface IAccountService
     /// <summary>
     /// Get profile information by account ID.
     /// </summary>
-    /// <param name="accountId">The unique identifier of the account.</param>
-    /// <returns> An <see cref="AccountResponse"/> contains profile information of the account if found;
-    /// otherwise, null.</returns>
-    Task<AccountResponse?> GetProfileByIdAsync(Guid accountId);
-    Task<AccountResponse?> GetProfileByUsernameAsync(string username, Guid userId);
+    /// <param name="accountId">The unique identifier of the account. If not provided, the current account's ID will be used.</param>
+    /// <returns> An <see cref="AccountResponse"/> contains profile information of the account if found; </returns>
+    /// <exception cref="NotFoundException">Thrown when the account does not exist.</exception>
+    Task<AccountResponse> GetProfileByIdAsync(Guid accountId = default);
+
+    /// <summary>
+    /// Get profile information by username.
+    /// </summary>
+    /// <param name="username">The username of the account.</param>
+    /// <returns> An <see cref="AccountResponse"/> contains profile information of the account if found; </returns>
+    /// <exception cref="NotFoundException">Thrown when the account does not exist.</exception>
+    Task<AccountResponse> GetProfileByUsernameAsync(string username);
 
     /// <summary>
     /// Update account information
     /// </summary>
-    /// <param name="accountId">The unique identifier of the account.</param>
     /// <param name="request">The update account request data.</param>
-    /// <returns> An <see cref="UpdateAccountResponse"/> contains updated account information if successful;
-    /// otherwise, null.</returns>
-    Task<AccountResponse?> UpdateAccountAsync(Guid accountId, UpdateAccountRequest request);
+    /// <returns> An <see cref="UpdateAccountResponse"/> contains updated account information if successful;</returns>
+    /// <exception cref="BadRequestException">Thrown when the username already exists.</exception>
+    Task<AccountResponse> UpdateAccountAsync(UpdateAccountRequest request);
 
     /// <summary>
     /// Check if the provided password is correct for the account
     /// </summary>
-    /// <param name="accountId">The unique identifier of the account.</param>
     /// <param name="password">The password to verify.</param>
     /// <returns>True if the password is correct; otherwise, false.</returns>
-    Task<bool> IsPasswordCorrectAsync(Guid accountId, string password);
+    Task<bool> IsPasswordCorrectAsync(string password);
 
     /// <summary>
     /// Schedule account for self-removal
     /// </summary>
-    /// <param name="accountId">The unique identifier of the account.</param>
-    /// <returns>The scheduled self-removal time if the account exists; otherwise, null.</returns>
-    Task<DateTime?> SelfRemoveAccount(Guid accountId);
+    /// <returns>The scheduled self-removal time if the account exists</returns>
+    Task<DateTime> SelfRemoveAccount();
 }

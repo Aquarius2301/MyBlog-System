@@ -1,11 +1,11 @@
 using Application.Dtos;
 using Application.Exceptions;
-using Application.Helpers;
 using Application.Services.Interfaces;
 using Application.Settings;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
+using WebApi.Attributes;
 using WebApi.Helpers;
 
 namespace WebApi.Controllers;
@@ -17,7 +17,6 @@ public class AuthController : BaseController
     private readonly IAuthService _service;
     private readonly ILanguageService _lang;
     private readonly JwtSettings _settings;
-    private readonly IJwtService _jwtService;
 
     public AuthController(
         IAuthService service,
@@ -29,7 +28,6 @@ public class AuthController : BaseController
         _service = service;
         _lang = lang;
         _settings = settings.Value;
-        _jwtService = jwtService;
     }
 
     /// <summary>
@@ -165,7 +163,7 @@ public class AuthController : BaseController
     /// 500 - Returns error message if exception occurs.
     /// </returns>
     [HttpGet("confirm")]
-    // [CheckStatusHelper([BusinessObject.Enums.StatusType.InActive])]
+    // [AuthorizeStatusAttribute([BusinessObject.Enums.StatusType.InActive])]
     public async Task<IActionResult> ConfirmAccount(
         [FromQuery] string type,
         [FromQuery] string token
@@ -178,18 +176,14 @@ public class AuthController : BaseController
 
         if (type == "register")
         {
-            var res = await _service.ConfirmRegisterAccountAsync(token);
-            return res
-                ? HandleResponse(Success<object>(null, "Success"))
-                : throw new BadRequestException("InvalidToken");
+            await _service.ConfirmRegisterAccountAsync(token);
+            return HandleResponse(Success<object>(null));
         }
         else
         {
-            var res = await _service.ConfirmForgotPasswordAccountAsync(token);
+            await _service.ConfirmForgotPasswordAccountAsync(token);
 
-            return !string.IsNullOrEmpty(res)
-                ? HandleResponse(Success(res, "ForgotPasswordConfirmSuccessful"))
-                : throw new BadRequestException("InvalidToken");
+            return HandleResponse(Success<object>(null));
         }
     }
 
@@ -203,7 +197,7 @@ public class AuthController : BaseController
     /// 500 - Returns error message if exception occurs.
     /// </returns>
     [HttpPost("refresh")]
-    // [CheckStatusHelper([
+    // [AuthorizeStatusAttribute([
     //     BusinessObject.Enums.StatusType.Active,
     //     BusinessObject.Enums.StatusType.Suspended,
     // ])]
@@ -248,17 +242,15 @@ public class AuthController : BaseController
     /// 500 -  Returns error message if exception occurs.
     /// </returns>
     [HttpPost("forgot-password")]
-    // [CheckStatusHelper([
+    // [AuthorizeStatusAttribute([
     //     BusinessObject.Enums.StatusType.Active,
     //     BusinessObject.Enums.StatusType.Suspended,
     // ])]
     public async Task<IActionResult> ForgotPassword([FromBody] ForgotPasswordResponse request)
     {
-        var res = await _service.ForgotPasswordAsync(request.Identifier);
+        await _service.ForgotPasswordAsync(request.Identifier);
 
-        return res
-            ? HandleResponse(Success(res, "ConfirmEmail"))
-            : throw new BadRequestException("NoAccountFound");
+        return HandleResponse(Success<object>(null, "ConfirmEmail"));
     }
 
     /// <summary>
@@ -283,11 +275,9 @@ public class AuthController : BaseController
             throw new BadRequestException("PasswordInvalid");
         }
 
-        var res = await _service.ResetPasswordAsync(request.ConfirmCode, request.NewPassword);
+        await _service.ResetPasswordAsync(request.ConfirmCode, request.NewPassword);
 
-        return res
-            ? HandleResponse(Success<object>(null, "Success"))
-            : throw new BadRequestException("InvalidToken");
+        return HandleResponse(Success<object>(null, "Success"));
     }
 
     /// <summary>
@@ -295,17 +285,14 @@ public class AuthController : BaseController
     /// </summary>
     /// <returns>
     /// 200 - Returns success message if logout is successful.
-    /// 401 - Returns error if user is not authenticated or logout fails.
     /// 500 - Returns error message if exception occurs.
     /// </returns>
     [Authorize]
     [HttpPost("logout")]
-    [CheckStatusHelper(["active", "suspend"])]
+    [AuthorizeStatusAttribute(["active", "suspend"])]
     public async Task<IActionResult> Logout()
     {
-        var user = _jwtService.GetAccountInfo();
-
-        var ok = await _service.RemoveRefresh(user.Id);
+        await _service.RemoveRefreshAsync();
 
         Response.Cookies.Delete(
             "accessToken",
@@ -329,8 +316,6 @@ public class AuthController : BaseController
             }
         );
 
-        return ok
-            ? HandleResponse(Success<object>(null, "Success"))
-            : throw new UnauthorizedException("InvalidToken");
+        return HandleResponse(Success<object>(null));
     }
 }
