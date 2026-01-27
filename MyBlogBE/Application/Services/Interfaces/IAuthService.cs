@@ -34,7 +34,8 @@ public interface IAuthService
     /// <returns>
     /// <para>An <see cref="AuthResponse"/> object if authentication is successful; otherwise, null.</para>
     /// </returns>
-    Task<AuthResponse?> GetAuthenticateAsync(string username, string password);
+    /// <exception cref="NotFoundException">Thrown when no account with the specified username is found or wrong password.</exception>
+    Task<AuthResponse> GetAuthenticateAsync(string username, string password);
 
     /// <summary>
     /// Generates a new access token using a valid refresh token.
@@ -43,16 +44,16 @@ public interface IAuthService
     /// <returns>
     /// <para>An <see cref="AuthResponse"/> object with a new access token if valid; otherwise, null.</para>
     /// </returns>
-    Task<AuthResponse?> GetRefreshTokenAsync(string refreshToken);
+    /// <exception cref="UnauthorizedException">Thrown when the refresh token does not match any account or expired.</exception>
+    Task<AuthResponse> GetRefreshTokenAsync(string refreshToken);
 
     /// <summary>
     /// Removes the refresh token associated with a user, effectively logging them out.
     /// </summary>
-    /// <param name="accountId">The unique identifier of the user account.</param>
     /// <returns>
-    /// <para>True if the refresh token was successfully removed; otherwise, false.</para>
+    /// A task representing the asynchronous operation.
     /// </returns>
-    Task<bool> RemoveRefresh(Guid accountId);
+    Task RemoveRefreshAsync();
 
     /// <summary>
     /// Registers a new user account.
@@ -68,27 +69,30 @@ public interface IAuthService
     /// </summary>
     /// <param name="confirmCode">The confirmation token sent to the user's email.</param>
     /// <returns>
-    /// <para>True if the account is confirmed successfully; otherwise, false.</para>
+    /// A task representing the asynchronous operation.
     /// </returns>
-    Task<bool> ConfirmRegisterAccountAsync(string confirmCode);
+    /// <exception cref="BadRequestException">Thrown when the confirmation code is invalid or expired.</exception>
+    Task ConfirmRegisterAccountAsync(string confirmCode);
 
     /// <summary>
     /// Confirms a password reset request using the provided confirmation code.
     /// </summary>
     /// <param name="confirmCode">The confirmation token sent to the user's email for password reset.</param>
     /// <returns>
-    /// <para>The new password or success message if confirmation succeeds; otherwise, null.</para>
+    /// The new password or success message if confirmation succeeds; otherwise, null.
     /// </returns>
-    Task<string?> ConfirmForgotPasswordAccountAsync(string confirmCode);
+    /// <exception cref="BadRequestException">Thrown when the confirmation code is invalid or expired.</exception>
+    Task<string> ConfirmForgotPasswordAccountAsync(string confirmCode);
 
     /// <summary>
     /// Initiates a forgot password process for the given identifier.
     /// </summary>
     /// <param name="identifier">The username or email of the account requesting password reset.</param>
     /// <returns>
-    /// <para>True if the reset email was sent successfully; otherwise, false.</para>
+    /// A task representing the asynchronous operation.
     /// </returns>
-    Task<bool> ForgotPasswordAsync(string identifier);
+    /// <exception cref="BadRequestException">Thrown when no account with the specified identifier is found.</exception>
+    Task ForgotPasswordAsync(string identifier);
 
     /// <summary>
     /// Resets the user's password using a confirmation code and new password.
@@ -96,7 +100,8 @@ public interface IAuthService
     /// <param name="confirmCode">The confirmation token sent to the user's email.</param>
     /// <param name="newPassowrd">The new password to set for the account.</param>
     /// <returns>
-    /// <para>True if the password was reset successfully; otherwise, false.</para>
+    /// A task representing the asynchronous operation.
     /// </returns>
-    Task<bool> ResetPasswordAsync(string confirmCode, string newPassowrd);
+    /// <exception cref="BadRequestException">Thrown when the confirmation code is invalid or expired.</exception>
+    Task ResetPasswordAsync(string confirmCode, string newPassowrd);
 }
