@@ -14,7 +14,10 @@ public class PostProfile : Profile
             .ForMember(dest => dest.Author, opt => opt.MapFrom(src => src.Account))
             .ForMember(dest => dest.CommentCount, opt => opt.MapFrom(src => src.Comments.Count()))
             .ForMember(dest => dest.LikeCount, opt => opt.MapFrom(src => src.PostLikes.Count()))
-            .ForMember(dest => dest.IsLiked, opt => opt.MapFrom(src => src.PostLikes.Count != 0))
+            .ForMember(
+                dest => dest.IsLiked,
+                opt => opt.MapFrom(src => src.PostLikes.Any(pl => pl.Account.Id == currentAccId))
+            )
             .ForMember(
                 dest => dest.IsOwner,
                 opt => opt.MapFrom(src => currentAccId == src.Account.Id)
