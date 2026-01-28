@@ -18,6 +18,7 @@ public class GetCommentsResponse
     public Guid Id { get; set; }
     public Guid PostId { get; set; }
     public Guid? ParentCommentId { get; set; }
+    public bool IsOwner { get; set; }
     public AccountNameResponse Commenter { get; set; } = null!;
     public AccountNameResponse? ReplyAccount { get; set; } = null;
     public string Content { get; set; } = null!;

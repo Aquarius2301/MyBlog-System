@@ -26,6 +26,10 @@ public class CommentProfile : Profile
             .ForMember(
                 dest => dest.Pictures,
                 opt => opt.MapFrom(src => src.Pictures.Select(pic => pic.Link).ToList())
+            )
+            .ForMember(
+                dest => dest.IsOwner,
+                opt => opt.MapFrom(src => src.AccountId == currentAccId)
             );
 
         CreateMap<Comment, PostLatestComment>()
