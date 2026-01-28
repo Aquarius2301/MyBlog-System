@@ -625,6 +625,7 @@ public class PostService : IPostService
         {
             var deletedAt = DateTime.UtcNow;
 
+            // Soft delete the post
             var affectedRows = await _unitOfWork
                 .Posts.GetQuery()
                 .WhereDeletedIsNull()
@@ -635,6 +636,7 @@ public class PostService : IPostService
             if (affectedRows == 0)
                 throw new NotFoundException("NoPost");
 
+            // Unlink pictures
             await _unitOfWork
                 .Pictures.GetQuery()
                 .WherePostId(postId)
