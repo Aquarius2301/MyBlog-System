@@ -14,7 +14,20 @@ public class PostProfile : Profile
             .ForMember(dest => dest.Author, opt => opt.MapFrom(src => src.Account))
             .ForMember(
                 dest => dest.CommentCount,
-                opt => opt.MapFrom(src => src.Comments.Count(x => x.DeletedAt == null))
+                opt =>
+                    opt.MapFrom(src =>
+                        src.Comments.Count(c =>
+                            // Parent comment has not deleted and
+                            (c.ParentComment == null && c.DeletedAt == null)
+                            ||
+                            // Child comment has not deleted and parent also has not deleted
+                            (
+                                c.ParentComment != null
+                                && c.DeletedAt == null
+                                && c.ParentComment.DeletedAt == null
+                            )
+                        )
+                    )
             )
             .ForMember(dest => dest.LikeCount, opt => opt.MapFrom(src => src.PostLikes.Count()))
             .ForMember(
@@ -36,8 +49,9 @@ public class PostProfile : Profile
                 dest => dest.LatestComment,
                 opt =>
                     opt.MapFrom(src =>
-                        src.Comments.OrderByDescending(c => c.CreatedAt)
-                            .FirstOrDefault(x => x.DeletedAt == null)
+                        src.Comments.Where(x => x.DeletedAt == null && x.ParentCommentId == null)
+                            .OrderByDescending(c => c.CreatedAt)
+                            .FirstOrDefault()
                     )
             );
     }
