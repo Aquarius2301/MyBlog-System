@@ -14,6 +14,7 @@ export type GetCommentsData = {
   isLiked: boolean;
   createdAt: string;
   updatedAt: string | null;
+  isOwner: boolean;
 };
 
 export type CreateCommentResponse = ApiResponse<GetCommentsData>;

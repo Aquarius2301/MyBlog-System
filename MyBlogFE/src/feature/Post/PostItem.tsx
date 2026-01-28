@@ -50,7 +50,7 @@ const PostItem = ({ post, enableViewModal = true }: PostItemProps) => {
                 likeCount: data,
               },
             };
-          }
+          },
         );
         updateItem(["posts"], post.id, (oldPost) => ({
           ...oldPost,
@@ -77,7 +77,7 @@ const PostItem = ({ post, enableViewModal = true }: PostItemProps) => {
                 likeCount: data,
               },
             };
-          }
+          },
         );
         updateItem(["posts"], post.id, (oldPost) => ({
           ...oldPost,
@@ -150,16 +150,18 @@ const PostItem = ({ post, enableViewModal = true }: PostItemProps) => {
             {post.likeCount}
           </Button>
 
-          <Button
-            type={enableViewModal ? "default" : "text"}
-            onClick={() => {
-              enableViewModal && setActiveModal("view");
-            }}
-            icon={<CommentOutlined />}
-            style={{ cursor: enableViewModal ? "pointer" : "default" }}
-          >
-            {post.commentCount}
-          </Button>
+          {enableViewModal && (
+            <Button
+              // type={enableViewModal ? "default" : "text"}
+              onClick={() => {
+                enableViewModal && setActiveModal("view");
+              }}
+              icon={<CommentOutlined />}
+              // style={{ cursor: enableViewModal ? "pointer" : "default" }}
+            >
+              {post.commentCount}
+            </Button>
+          )}
         </Space>
 
         {/* Lastest Comment */}

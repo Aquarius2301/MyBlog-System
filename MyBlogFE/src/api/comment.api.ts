@@ -12,7 +12,7 @@ const pageSize = Number(import.meta.env.VITE_PAGE_SIZE) || 5;
 const commentApi = {
   getChildComments: async (
     commentId: string,
-    cursor: string | null
+    cursor: string | null,
   ): Promise<GetCommentsResponse> => {
     let path = `${url}/${commentId}?pageSize=${pageSize}`;
     if (cursor) {
@@ -27,17 +27,22 @@ const commentApi = {
   },
 
   cancelLikeComment: async (
-    commentId: string
+    commentId: string,
   ): Promise<ApiResponse<number>> => {
     let path = `${url}/${commentId}/cancel-like`;
     return await apiConfig.delete(path);
   },
 
   addComment: async (
-    request: CreateCommentRequest
+    request: CreateCommentRequest,
   ): Promise<CreateCommentResponse> => {
     let path = `${url}`;
     return await apiConfig.post(path, request);
+  },
+
+  deleteComment: async (commentId: string): Promise<any> => {
+    let path = `${url}/${commentId}`;
+    return await apiConfig.delete(path);
   },
 };
 
