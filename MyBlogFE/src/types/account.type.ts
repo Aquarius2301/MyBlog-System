@@ -1,4 +1,4 @@
-import type { ApiResponse } from "./common.type";
+import type { ApiResponse, PaginationResponse } from "./common.type";
 
 export interface AccountData {
   id: string;
@@ -24,4 +24,6 @@ export interface AccountNameData {
 
 export interface AccountResponse extends ApiResponse<AccountData> {}
 export interface AccountListResponse extends ApiResponse<AccountData[]> {}
-export interface AccountNameResponse extends ApiResponse<AccountNameData> {}
+export interface AccountNameResponse extends ApiResponse<
+  PaginationResponse<AccountNameData>
+> {}

@@ -43,7 +43,7 @@ const CommentUpdateModal = ({
 
   const queryClient = useQueryClient();
 
-  const { data, isLoading } = useApiQuery<GetCommentsData>({
+  const { data } = useApiQuery<GetCommentsData>({
     queryKey: ["getCommentById", id],
     queryFn: () => commentApi.getCommentById(id),
     enabled: true,

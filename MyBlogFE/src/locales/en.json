@@ -19,6 +19,7 @@
   "DeleteComment": "Delete Comment",
   "CommentUpdatedFailed": "Failed to update comment. Please try again.",
   "CommentUpdated": "Comment updated successfully.",
+  "NoMoreAccounts": "No more accounts to load.",
 
   "LoginPage": "Login Page",
   "Welcome": "Welcome to MyBlog",
