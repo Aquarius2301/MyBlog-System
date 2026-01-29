@@ -52,6 +52,24 @@ public class CommentController : BaseController
     }
 
     /// <summary>
+    /// Retrieves a specific comment by its ID.
+    /// </summary>
+    /// <param name="id">The unique identifier of the comment to retrieve.</param>
+    /// <returns>
+    /// 200 - Returns the comment details.
+    /// 404 - Returns error if comment does not exist.
+    /// 500 - Returns error message if exception occurs.
+    /// </returns>
+    [HttpGet("details/{id}")]
+    [AuthorizeStatusAttribute(["active", "suspend"])]
+    public async Task<IActionResult> GetCommentById(Guid id)
+    {
+        var res = await _service.GetCommentByIdAsync(id);
+
+        return HandleResponse(Success(res));
+    }
+
+    /// <summary>
     /// Likes a specific comment.
     /// </summary>
     /// <param name="id">The unique identifier of the comment to like.</param>
@@ -130,7 +148,7 @@ public class CommentController : BaseController
     /// </returns>
     [HttpPut("{id}")]
     [AuthorizeStatusAttribute("active")]
-    public async Task<IActionResult> UpdateComment(Guid id, [FromForm] UpdateCommentRequest request)
+    public async Task<IActionResult> UpdateComment(Guid id, [FromBody] UpdateCommentRequest request)
     {
         if (string.IsNullOrWhiteSpace(request.Content) && request.Pictures.Count == 0)
         {

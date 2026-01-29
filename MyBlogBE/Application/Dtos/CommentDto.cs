@@ -28,7 +28,6 @@ public class GetCommentsResponse
     public bool IsLiked { get; set; }
     public DateTime CreatedAt { get; set; }
     public DateTime? UpdatedAt { get; set; } = null;
-    public DateTime? DeletedAt { get; set; } = null;
 }
 
 public class CreateCommentRequest
