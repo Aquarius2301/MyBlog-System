@@ -41,3 +41,10 @@ export type CreateCommentData = {
   pictures: string[];
   createdAt: string;
 };
+
+export type UpdateCommentRequest = {
+  content: string;
+  pictures: string[];
+};
+
+export type UpdateCommentResponse = ApiResponse<GetCommentsData>;

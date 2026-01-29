@@ -6,7 +6,7 @@ import {
   useFixInfiniteQuery,
 } from "@/hooks";
 import { formatDateTime } from "@/utils";
-import { Button, Divider, Flex, Modal, Space } from "antd";
+import { Button, Divider, Flex, Space } from "antd";
 import { CommentOutlined, LikeFilled, LikeOutlined } from "@ant-design/icons";
 import CommentChildList from "./CommentChildList";
 import CommentCreateInput from "./components/CommentCreateInput";
@@ -15,6 +15,7 @@ import type { GetCommentsData } from "@/types/comment.type";
 import { CommentEditDropdown } from "./CommentEditDropdown";
 import { useState } from "react";
 import { DeleteCommentModal } from "./components/DeleteCommentModal";
+import CommentUpdateModal from "./components/CommentUpdateModal";
 
 type CommentItemProps = {
   replyingToId: string | null | undefined;
@@ -130,7 +131,13 @@ const CommentItem = ({
           <Text>{<CommentOutlined />}</Text>
         </div>
       </Space>
-      {activeModal === "update" && <Modal></Modal>}
+      {activeModal === "update" && (
+        <CommentUpdateModal
+          id={item.id}
+          postId={postId}
+          onClose={() => setActiveModal(null)}
+        />
+      )}
       {activeModal === "delete" && (
         <DeleteCommentModal
           id={item.id}

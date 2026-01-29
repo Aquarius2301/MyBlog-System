@@ -6,7 +6,7 @@ import {
   useFixInfiniteQuery,
 } from "@/hooks";
 import { formatDateTime } from "@/utils";
-import { Button, Divider, Flex, Modal, Space } from "antd";
+import { Button, Divider, Flex, Space } from "antd";
 import {
   CommentOutlined,
   LikeFilled,
@@ -18,6 +18,7 @@ import type { GetCommentsData } from "@/types/comment.type";
 import { CommentEditDropdown } from "./CommentEditDropdown";
 import { useState } from "react";
 import { DeleteCommentModal } from "./components/DeleteCommentModal";
+import CommentUpdateModal from "./components/CommentUpdateModal";
 
 type CommentItemProps = {
   item: GetCommentsData;
@@ -118,7 +119,9 @@ const CommentChildItem = ({
           {t("CommentDate")}: {formatDateTime(item.createdAt)}{" "}
           {item.isOwner && (
             <CommentEditDropdown
-              onUpdate={() => {}}
+              onUpdate={() => {
+                setActiveModal("update");
+              }}
               onDelete={() => {
                 setActiveModal("delete");
               }}
@@ -147,7 +150,15 @@ const CommentChildItem = ({
         </div>
       </Space>
 
-      {activeModal === "update" && <Modal></Modal>}
+      {activeModal === "update" && (
+        <CommentUpdateModal
+          id={item.id}
+          postId={postId}
+          onClose={() => setActiveModal(null)}
+          parentCommentId={parentCommentId}
+        />
+      )}
+
       {activeModal === "delete" && (
         <DeleteCommentModal
           id={item.id}

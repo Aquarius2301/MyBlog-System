@@ -99,7 +99,12 @@ ViewPostModalProps) => {
       open={isModalOpen}
       footer={null}
       width={1200}
-      onCancel={() => onClose()}
+      onCancel={() => {
+        queryClient.resetQueries({ queryKey: ["getPostByLink"] });
+        queryClient.resetQueries({ queryKey: ["getPostComments"] });
+        queryClient.resetQueries({ queryKey: ["getChildComments"] });
+        onClose();
+      }}
       closeIcon={null}
       destroyOnHidden={true}
     >
