@@ -58,7 +58,7 @@ const NavigationBar = ({ title }: NavigationBarProps) => {
               onClick={() => navigate("/home")}
               style={{ cursor: "pointer", display: "inline-block" }}
             >
-              <ImageAvatar url="/favicon.ico" shape="square" />
+              <ImageAvatar url="/favicon.png" shape="square" />
               <span style={{ margin: 10, fontWeight: "bold" }}>My Blog</span>
             </div>
 
