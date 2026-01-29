@@ -1,5 +1,6 @@
 import {
   AccountSearchPage,
+  ConfirmPage,
   HomePage,
   LoginPage,
   MyProfilePage,
@@ -27,6 +28,7 @@ export const routes: RouteConfig[] = [
   { path: "/profile", component: ProfilePage, isProtected: true },
   { path: "/profile/me", component: MyProfilePage, isProtected: true },
   { path: "/account/search", component: AccountSearchPage, isProtected: true },
+  { path: "/confirm", component: ConfirmPage, isProtected: false },
 ];
 
 //   { path: "/", component: HomePage, protected: true },
