@@ -79,7 +79,7 @@ public class AccountController : BaseController
     /// 200 - Returns accounts matching the name with pagination.
     /// 500 - Returns error message if exception occurs.
     /// </returns>
-    [HttpGet("")]
+    [HttpGet("search")]
     public async Task<IActionResult> GetAccountName(
         [FromQuery] string name,
         [FromQuery] PaginationRequest pagination
