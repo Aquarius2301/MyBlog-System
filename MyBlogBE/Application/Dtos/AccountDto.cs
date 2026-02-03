@@ -26,9 +26,10 @@ public class AccountNameResponse
 
 public class UpdateAccountRequest
 {
-    public string? Username { get; set; }
+    // public string? Username { get; set; }
     public string? DisplayName { get; set; }
     public DateOnly? DateOfBirth { get; set; }
+    public string? Language { get; set; }
 }
 
 public class UpdateAccountResponse

@@ -1,6 +1,7 @@
 using Application.Dtos;
 using Application.Exceptions;
 using Application.Services.Interfaces;
+using BusinessObject.Enums;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using WebApi.Attributes;
@@ -117,17 +118,20 @@ public class AccountController : BaseController
     {
         var errors = new Dictionary<string, string>();
 
-        if (
-            request.Username != null
-            && !ValidationHelper.IsValidString(request.Username, true, 3, 20)
-        )
-            errors["username"] = "UsernameInvalid";
+        // if (
+        //     request.Username != null
+        //     && !ValidationHelper.IsValidString(request.Username, true, 3, 20)
+        // )
+        //     errors["username"] = "UsernameInvalid";
 
         if (
             request.DisplayName != null
             && !ValidationHelper.IsValidString(request.DisplayName, false, 3, 50)
         )
             errors["displayName"] = "DisplayNameLength";
+
+        if (request.Language != "en" && request.Language != "vi" && request.Language != "ja")
+            errors["language"] = "LanguageInvalid";
 
         if (errors.Count > 0)
         {
@@ -158,19 +162,19 @@ public class AccountController : BaseController
             || !await _service.IsPasswordCorrectAsync(request.OldPassword) // correct check
         )
         {
-            errors["OldPassword"] = "OldPasswordIncorrect";
+            errors["oldPassword"] = "OldPasswordIncorrect";
         }
 
         // Check if the new password is different from the old password
         if (request.OldPassword == request.NewPassword)
         {
-            errors["NewPassword"] = "NewPasswordMustBeDifferent";
+            errors["newPassword"] = "NewPasswordMustBeDifferent";
         }
 
         // Check if the new password is strong enough
         if (!ValidationHelper.IsStrongPassword(request.NewPassword))
         {
-            errors["NewPassword"] = "PasswordRegister";
+            errors["newPassword"] = "PasswordInvalid";
         }
 
         if (errors.Count > 0)
