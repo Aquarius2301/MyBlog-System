@@ -1,20 +1,22 @@
 import { accountApi, authApi } from "@/api";
 import { useApiMutation, useApiQuery } from "@/hooks";
 import type { AccountData } from "@/types/account.type";
+import { i18n } from "@/utils";
 import { useQueryClient } from "@tanstack/react-query";
-import { createContext, type ReactNode } from "react";
+import { createContext, useEffect, type ReactNode } from "react";
 
 interface AuthContextReturn {
   account: AccountData | null | undefined;
   isLoading: boolean;
   logout: () => Promise<void>;
   fetchInfo: () => Promise<void>;
-  //   changeLanguage: (language: string) => void;
+  // changeLanguage: (language: string) => void;
   changeAvatar: (avatarUrl: string) => void;
+  updateProfile: (account: AccountData) => void;
 }
 
 export const AuthContext = createContext<AuthContextReturn | undefined>(
-  undefined
+  undefined,
 );
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
@@ -38,6 +40,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     },
   });
 
+  const fetchInfo = async () => {
+    await fetchProfile();
+  };
+
+  // const changeLanguage = (language: string) => {};
+
   //   const { i18n } = useTranslation();
 
   // const fetchInfo = async () => {
@@ -54,11 +62,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   //   }
   // };
 
-  //   useEffect(() => {
-  //     if (account) {
-  //       i18n.changeLanguage(account?.language || "en");
-  //     }
-  //   }, [account]);
+  useEffect(() => {
+    if (account) {
+      i18n.changeLanguage(account?.language || "en");
+    }
+  }, [account?.language]);
 
   //   const changeLanguage = (language: string) => {
   //     i18n.changeLanguage(language);
@@ -71,14 +79,23 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     });
   };
 
+  const updateProfile = (account: AccountData) => {
+    queryClient.setQueryData<AccountData>(["myProfile"], (old) => {
+      if (!old) return old;
+      return { ...old, ...account };
+    });
+  };
+
   return (
     <AuthContext.Provider
       value={{
         account,
         isLoading: isProfileLoading || isLogoutLoading,
         logout: async () => fetchLogout({}),
-        fetchInfo: async () => fetchProfile(),
+        fetchInfo,
         changeAvatar,
+        updateProfile,
+        // changeLanguage,
       }}
     >
       {children}

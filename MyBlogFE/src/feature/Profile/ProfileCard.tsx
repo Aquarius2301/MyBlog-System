@@ -1,53 +1,52 @@
 import { formatDate, formatDateTime } from "@/utils";
 import { Card, Dropdown, Flex, Tag } from "antd";
-import { EllipsisOutlined } from "@ant-design/icons";
 import { Text } from "@/components";
 import { ProfileAvatar } from "./ProfileAvatar";
 import { useSafeTranslation } from "@/hooks";
 import type { AccountData } from "@/types/account.type";
+import {
+  DeleteFilled,
+  EditOutlined,
+  EllipsisOutlined,
+  LockOutlined,
+} from "@ant-design/icons";
+import EditProfileModal from "./modals/EditProfileModal";
+import { useState } from "react";
+import SelfRemoveModal from "./modals/SelfRemoveModal";
+import ChangePasswordModal from "./modals/ChangePasswordModal";
 
 export type ProfileCardProps = {
   account: AccountData;
 };
 
+type ModalType = "updateProfile" | "changePassword" | "selfRemove";
 const ProfileCard = ({ account }: ProfileCardProps) => {
-  // const [isModalOpen, setModalOpen] = useState(false);
+  const [openModal, setModalOpen] = useState<ModalType | null>(null);
 
   const { t } = useSafeTranslation();
 
-  // const handleNavigate = (key: string) => {
-  //   if (key === "createPost") {
-  //     setModalOpen(true);
-  //   }
-  // };
-
   const profileMenu = [
     {
-      key: "createPost",
-      label: t("CreatePost"),
+      key: "updateProfile" as ModalType,
+      label: t("UpdateProfile"),
+      icon: <EditOutlined />,
     },
     {
-      key: "updateProfile",
-      label: t("UpdateProfile"),
+      key: "changePassword" as ModalType,
+      label: t("ChangePassword"),
+      icon: <LockOutlined />,
+    },
+    {
+      key: "selfRemove" as ModalType,
+      label: t("SelfRemove"),
+      icon: <DeleteFilled />,
+      danger: true,
     },
   ];
 
   return (
     <Card style={{ marginBottom: 24 }}>
       <Flex vertical align="center" gap={8}>
-        {account.isOwner && (
-          <div style={{ alignSelf: "flex-end" }}>
-            <Dropdown
-              menu={{
-                items: profileMenu,
-                // onClick: (e) => handleNavigate(e.key),
-              }}
-              trigger={["click"]}
-            >
-              <EllipsisOutlined />
-            </Dropdown>
-          </div>
-        )}
         <ProfileAvatar
           url={account.avatarUrl}
           size={128}
@@ -69,6 +68,19 @@ const ProfileCard = ({ account }: ProfileCardProps) => {
           {account.status}
         </Tag>
         <Card style={{ marginTop: 16, width: "100%" }}>
+          {account.isOwner && (
+            <div style={{ textAlign: "right" }}>
+              <Dropdown
+                menu={{
+                  items: profileMenu,
+                  onClick: ({ key }) => setModalOpen(key as ModalType),
+                }}
+                trigger={["click"]}
+              >
+                <EllipsisOutlined />
+              </Dropdown>
+            </div>
+          )}
           <Text as={"p"} style={{ marginBottom: 16 }}>
             <Text style={{ fontWeight: "bold" }}>Email:</Text> {account.email}
           </Text>
@@ -82,6 +94,18 @@ const ProfileCard = ({ account }: ProfileCardProps) => {
           </Text>
         </Card>
       </Flex>
+
+      {openModal == "updateProfile" && (
+        <EditProfileModal onClose={() => setModalOpen(null)} />
+      )}
+
+      {openModal == "selfRemove" && (
+        <SelfRemoveModal onClose={() => setModalOpen(null)} />
+      )}
+
+      {openModal == "changePassword" && (
+        <ChangePasswordModal onClose={() => setModalOpen(null)} />
+      )}
     </Card>
   );
 };

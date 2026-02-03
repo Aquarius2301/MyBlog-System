@@ -1,6 +1,8 @@
 import type {
   AccountNameResponse,
   AccountResponse,
+  UpdateAccountRequest,
+  UpdatePasswordRequest,
 } from "@/types/account.type";
 import apiConfig from "./config.api";
 import type { ApiResponse } from "@/types/common.type";
@@ -33,6 +35,22 @@ const accountApi = {
     return await apiConfig.put(`${url}/profile/me/change-avatar`, {
       picture,
     });
+  },
+
+  updateProfile: async (
+    request: UpdateAccountRequest,
+  ): Promise<AccountResponse> => {
+    return await apiConfig.put(`${url}/profile/me`, request);
+  },
+
+  selfRemove: async (): Promise<ApiResponse<string>> => {
+    return await apiConfig.put(`${url}/profile/me/self-remove`);
+  },
+
+  changePassword: async (
+    request: UpdatePasswordRequest,
+  ): Promise<ApiResponse<string>> => {
+    return await apiConfig.put(`${url}/profile/me/change-password`, request);
   },
 };
 
