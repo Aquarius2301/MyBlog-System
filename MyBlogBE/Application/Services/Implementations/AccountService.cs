@@ -247,7 +247,7 @@ public class AccountService : IAccountService
 
         account.SelfRemoveTime = selfRemoveTime;
 
-        await _emailService.SendAccountRemovalEmailAsync(account.Email);
+        await _emailService.SendAccountRemovalEmailAsync(account.Email, account.Language);
 
         await _unitOfWork.SaveChangesAsync();
 
