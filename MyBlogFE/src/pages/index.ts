@@ -3,3 +3,5 @@ export * from "./LoginPage";
 export * from "./ProfilePage";
 export * from "./MyProfilePage";
 export * from "./ViewPostPage";
+export * from "./AccountSearchPage";
+export * from "./ConfirmPage";

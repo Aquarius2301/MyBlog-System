@@ -10,9 +10,12 @@ import { Button, Divider, Flex, Space } from "antd";
 import { CommentOutlined, LikeFilled, LikeOutlined } from "@ant-design/icons";
 import CommentChildList from "./CommentChildList";
 import CommentCreateInput from "./components/CommentCreateInput";
-import { useRef } from "react";
 import { CommentProvider } from "@/contexts/CommentContext";
 import type { GetCommentsData } from "@/types/comment.type";
+import { CommentEditDropdown } from "./CommentEditDropdown";
+import { useState } from "react";
+import { DeleteCommentModal } from "./components/DeleteCommentModal";
+import CommentUpdateModal from "./components/CommentUpdateModal";
 
 type CommentItemProps = {
   replyingToId: string | null | undefined;
@@ -22,6 +25,8 @@ type CommentItemProps = {
   // onReturn: (item: GetCommentsData) => void;
 };
 
+type ModalState = "update" | "delete" | null;
+
 const CommentItem = ({
   postId,
   item,
@@ -29,9 +34,7 @@ const CommentItem = ({
   replyingToId,
   setReplyingToId,
 }: CommentItemProps) => {
-  const childListRef = useRef<{
-    addComment: (comment: GetCommentsData, replyAccountName: string) => void;
-  }>(null);
+  const [activeModal, setActiveModal] = useState<ModalState>(null);
 
   const { updateItem } = useFixInfiniteQuery<GetCommentsData>({
     keySelector: (item) => item.id,
@@ -89,7 +92,19 @@ const CommentItem = ({
             @{item.commenter.username}
           </Text>
         </div>
-        {t("CommentDate")}: {formatDateTime(item.createdAt)}
+        <div>
+          {t("CommentDate")}: {formatDateTime(item.createdAt)}{" "}
+          {item.isOwner && (
+            <CommentEditDropdown
+              onUpdate={() => {
+                setActiveModal("update");
+              }}
+              onDelete={() => {
+                setActiveModal("delete");
+              }}
+            />
+          )}
+        </div>
       </Flex>
       {/* Content */}
       <Paragraph content={item.content} isExpandable />
@@ -116,7 +131,20 @@ const CommentItem = ({
           <Text>{<CommentOutlined />}</Text>
         </div>
       </Space>
-
+      {activeModal === "update" && (
+        <CommentUpdateModal
+          id={item.id}
+          postId={postId}
+          onClose={() => setActiveModal(null)}
+        />
+      )}
+      {activeModal === "delete" && (
+        <DeleteCommentModal
+          id={item.id}
+          postId={postId}
+          onClose={() => setActiveModal(null)}
+        />
+      )}
       {replyingToId == item.id && (
         <CommentCreateInput
           comment={item}
@@ -124,7 +152,6 @@ const CommentItem = ({
           parentCommentId={item.id}
         />
       )}
-
       {item.commentCount > 0 && (
         <CommentProvider>
           <CommentChildList

@@ -48,6 +48,7 @@ export const CreateAccountForm = () => {
       dateOfBirth: values["dateOfBirth"]
         ? dayjs(values["dateOfBirth"]).format("YYYY-MM-DD")
         : dayjs(getValidBirthDate()).format("YYYY-MM-DD"),
+      language: localStorage.getItem("i18nextLng") || "en",
     };
 
     mutate(requestData);

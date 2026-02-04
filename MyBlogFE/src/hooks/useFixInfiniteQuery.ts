@@ -53,7 +53,7 @@ interface UseFixInfiniteQueryReturn<TData> {
   updateItem: (
     queryKey: any[],
     key: any,
-    updater: (old: TData) => TData
+    updater: (old: TData) => TData,
   ) => void;
 }
 
@@ -128,7 +128,7 @@ export default function useFixInfiniteQuery<TData>({
   const updateItem = (
     queryKey: any[],
     key: any,
-    updater: (old: TData) => TData
+    updater: (old: TData) => TData,
   ) => {
     // Early return if no key selector is provided
     if (!keySelector) return;
@@ -148,10 +148,10 @@ export default function useFixInfiniteQuery<TData>({
               ...page.data,
               // Map through items in each page and apply updater to matching item
               items: page.data?.items.map((item: TData) =>
-                keySelector(item) === key ? updater(item) : item
+                keySelector(item) === key ? updater(item) : item,
               ),
             },
-          })
+          }),
         ),
       };
     });
@@ -160,10 +160,12 @@ export default function useFixInfiniteQuery<TData>({
   const addItem = (
     queryKey: any[],
     item: TData,
-    position: "start" | "end" = "start"
+    position: "start" | "end" = "start",
   ) => {
     queryClient.setQueryData(queryKey, (old: TInfiniteData<TData>) => {
-      if (!old) return old;
+      if (!old) {
+        return old;
+      }
 
       return {
         ...old,
@@ -183,7 +185,7 @@ export default function useFixInfiniteQuery<TData>({
               };
             }
             return page;
-          }
+          },
         ),
       };
     });
@@ -202,10 +204,10 @@ export default function useFixInfiniteQuery<TData>({
             data: {
               ...page.data,
               items: page.data?.items.filter(
-                (item: TData) => keySelector(item) !== key
+                (item: TData) => keySelector(item) !== key,
               ),
             },
-          })
+          }),
         ),
       };
     });

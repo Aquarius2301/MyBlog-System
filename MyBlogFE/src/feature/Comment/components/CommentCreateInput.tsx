@@ -18,6 +18,7 @@ import {
   useSafeTranslation,
 } from "@/hooks";
 import { commentApi } from "@/api";
+import type { GetPostDetailData } from "@/types/post.type";
 
 type CommentCreateInputProps = {
   comment: GetCommentsData | null;
@@ -42,6 +43,10 @@ const CommentCreateInput = ({
     keySelector: (item) => item.id,
   });
 
+  const { updateItem } = useFixInfiniteQuery<GetPostDetailData>({
+    keySelector: (item) => item.id,
+  });
+
   const { isLoading: apiLoading, mutate: execute } = useApiMutation<
     GetCommentsData,
     CreateCommentRequest
@@ -53,9 +58,30 @@ const CommentCreateInput = ({
         message.success(t("CommentAdded"));
         if (parentCommentId) {
           addItem(["getChildComments", parentCommentId], data, "start");
+          updateItem(["getPostComments", postId], data.id, (old) => {
+            if (!old) return old;
+            return {
+              ...old,
+              commentCount: old.commentCount + 1,
+            };
+          });
         } else if (postId) {
           addItem(["getPostComments", postId], data, "start");
         }
+        updateItem(["posts"], postId, (old) => {
+          if (!old) return old;
+          return {
+            ...old,
+            commentCount: old.commentCount + 1,
+          };
+        });
+        // updateItem(["getPostByLink", link], postId, (old) => {
+        //   if (!old) return old;
+        //   return {
+        //     ...old,
+        //     commentCount: old.commentCount + 1,
+        //   };
+        // });
       }
       setCommentContent("");
       setFiles([]);
