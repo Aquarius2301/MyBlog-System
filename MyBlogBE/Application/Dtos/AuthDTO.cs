@@ -1,3 +1,5 @@
+using BusinessObject.Enums;
+
 namespace Application.Dtos;
 
 public class AuthRequest
@@ -31,6 +33,7 @@ public class RegisterRequest
     public DateOnly DateOfBirth { get; set; }
     public string Email { get; set; } = null!;
     public string Password { get; set; } = null!;
+    public string Language { get; set; } = "";
 }
 
 public class RegisterResponse

@@ -166,7 +166,12 @@ public class AuthService : IAuthService
         var confirmCode = StringHelper.GenerateRandomString(tokenLength, true);
         var currentTime = DateTime.UtcNow;
 
-        await _emailService.SendRegisterEmailAsync(request.Email, request.Username, confirmCode);
+        await _emailService.SendRegisterEmailAsync(
+            request.Email,
+            request.Username,
+            confirmCode,
+            request.Language
+        );
 
         var newAccount = new Account
         {
@@ -181,6 +186,7 @@ public class AuthService : IAuthService
             HashedPassword = PasswordHasherHelper.HashPassword(request.Password),
             Status = StatusType.Inactive.Code,
             CreatedAt = currentTime,
+            Language = request.Language,
         };
 
         _unitOfWork.Accounts.Add(newAccount);
@@ -268,7 +274,8 @@ public class AuthService : IAuthService
             await _emailService.SendForgotPasswordEmailAsync(
                 account.Email,
                 account.Username,
-                confirmCode
+                confirmCode,
+                account.Language
             );
 
             account.EmailVerifiedCode = confirmCode;

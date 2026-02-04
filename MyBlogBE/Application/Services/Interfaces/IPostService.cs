@@ -111,5 +111,9 @@ public interface IPostService
     /// A task that represents the asynchronous delete operation.
     /// </returns>
     /// <exception cref="NotFoundException">Thrown when the post is not found.</exception>
+    /// <remarks>
+    /// The post is soft-deleted by setting its DeletedAt property.
+    /// Warnings: This operation only unlink pictures associations in the database, but does not delete the comments
+    /// </remarks>
     Task DeletePostAsync(Guid postId);
 }

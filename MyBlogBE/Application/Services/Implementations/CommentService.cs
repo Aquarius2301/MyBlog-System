@@ -93,6 +93,24 @@ public class CommentService : ICommentService
         return (res, nextCursor);
     }
 
+    public async Task<GetCommentsResponse> GetCommentByIdAsync(Guid commentId)
+    {
+        var comment =
+            await _unitOfWork
+                .Comments.ReadOnly()
+                .WhereDeletedIsNull()
+                .WhereId(commentId)
+                .Where(x => x.Post.DeletedAt == null) // Ensure the post is not deleted
+                .ProjectTo<GetCommentsResponse>(
+                    _mapper.ConfigurationProvider,
+                    new { currentAccId = AccountId }
+                )
+                .FirstOrDefaultAsync()
+            ?? throw new NotFoundException("NoComment");
+
+        return comment;
+    }
+
     private async Task<bool> IsCommentsExists(Guid commentId)
     {
         return await _unitOfWork

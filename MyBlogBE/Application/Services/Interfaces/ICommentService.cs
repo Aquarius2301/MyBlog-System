@@ -27,6 +27,16 @@ public interface ICommentService
     );
 
     /// <summary>
+    /// Gets a comment by its ID.
+    /// </summary>
+    /// <param name="commentId">The ID of the comment to retrieve.</param>
+    /// <returns>
+    /// A <see cref="GetCommentsResponse"/> object representing the comment.
+    /// </returns>
+    /// <exception cref="NotFoundException">Thrown when the comment does not exist.</exception>
+    Task<GetCommentsResponse> GetCommentByIdAsync(Guid commentId);
+
+    /// <summary>
     /// Likes a comment for the given user.
     /// </summary>
     /// <param name="commentId">The ID of the comment to like.</param>

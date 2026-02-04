@@ -21,6 +21,11 @@ public class BaseSettings
     public int SelfRemoveDurationDays { get; set; }
 
     /// <summary>
+    /// The URL of the frontend application.
+    /// </summary>
+    public string FrontendUrl { get; set; } = null!;
+
+    /// <summary>
     /// Configuration settings for Cloudinary integration.
     /// </summary>
     public UploadSettings UploadSettings { get; set; } = null!;

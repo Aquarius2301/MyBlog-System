@@ -148,14 +148,15 @@ public class AccountService : IAccountService
         //     return null;
         // }
 
-        if (request.Username != null)
-            if (await _unitOfWork.Accounts.ReadOnly().WhereUsername(request.Username).AnyAsync())
-                throw new BadRequestException("UsernameExists");
+        // if (request.Username != null)
+        //     if (await _unitOfWork.Accounts.ReadOnly().WhereUsername(request.Username).AnyAsync())
+        //         throw new BadRequestException("UsernameExists");
 
         var updateTime = DateTime.UtcNow;
-        account.Username = request.Username ?? account.Username;
+        // account.Username = request.Username ?? account.Username;
         account.DisplayName = request.DisplayName ?? account.DisplayName;
         account.DateOfBirth = request.DateOfBirth ?? account.DateOfBirth;
+        account.Language = request.Language ?? account.Language;
         account.UpdatedAt = updateTime;
 
         await _unitOfWork.SaveChangesAsync();
@@ -246,7 +247,7 @@ public class AccountService : IAccountService
 
         account.SelfRemoveTime = selfRemoveTime;
 
-        await _emailService.SendAccountRemovalEmailAsync(account.Email);
+        await _emailService.SendAccountRemovalEmailAsync(account.Email, account.Language);
 
         await _unitOfWork.SaveChangesAsync();
 

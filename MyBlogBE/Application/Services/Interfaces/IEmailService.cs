@@ -21,12 +21,13 @@ public interface IEmailService
     /// <param name="email">Recipient email address.</param>
     /// <param name="username">Username of the new account.</param>
     /// <param name="confirmCode">Confirmation code for email verification.</param>
+    /// <param name="lang">Language preference for the email content.</param>
     /// <returns>A task representing the asynchronous email sending operation.</returns>
     /// <remarks>
     /// The email includes a link to confirm the account.
     /// The confirmation link expires after <see cref="TokenTimeOut"/> minutes.
     /// </remarks>
-    Task SendRegisterEmailAsync(string email, string username, string confirmCode);
+    Task SendRegisterEmailAsync(string email, string username, string confirmCode, string lang);
 
     /// <summary>
     /// Sends a password reset email to the user.
@@ -34,20 +35,27 @@ public interface IEmailService
     /// <param name="email">Recipient email address.</param>
     /// <param name="username">Username of the account.</param>
     /// <param name="confirmCode">Confirmation code for password reset.</param>
+    /// <param name="lang">Language preference for the email content.</param>
     /// <returns>A task representing the asynchronous email sending operation.</returns>
     /// <remarks>
     /// The email includes a link to reset the password.
     /// The confirmation link expires after <see cref="TokenTimeOut"/> minutes.
     /// </remarks>
-    Task SendForgotPasswordEmailAsync(string email, string username, string confirmCode);
+    Task SendForgotPasswordEmailAsync(
+        string email,
+        string username,
+        string confirmCode,
+        string lang
+    );
 
     /// <summary>
     /// Sends an account removal notification email to the user.
     /// </summary>
     /// <param name="email">Recipient email address.</param>
+    /// <param name="lang">Language preference for the email content.</param>
     /// <returns>A task representing the asynchronous email sending operation.</returns>
     /// <remarks>
     /// The email notifies the user that their account has been removed.
     /// </remarks>
-    Task SendAccountRemovalEmailAsync(string email);
+    Task SendAccountRemovalEmailAsync(string email, string lang);
 }
