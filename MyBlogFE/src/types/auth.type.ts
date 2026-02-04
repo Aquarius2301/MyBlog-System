@@ -15,6 +15,7 @@ export interface RegisterRequest {
   dateOfBirth: string; // DateOnly -> ISO date string
   email: string;
   password: string;
+  language: string;
 }
 
 export interface RegisterData {

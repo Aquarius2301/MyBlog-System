@@ -157,7 +157,7 @@ export const RegisterConfirm = ({ type, token }: Props) => {
   /**
    * Token invalid / expired
    */
-  if (error || data === null) {
+  if (error) {
     return (
       <Card style={{ width: "100vw", height: "100vh" }}>
         <Result status="404" title={t("TokenMissing")} />
@@ -181,7 +181,7 @@ export const RegisterConfirm = ({ type, token }: Props) => {
       <Card>
         <Result
           status="success"
-          title={data}
+          title={t("ConfirmSuccess")}
           extra={
             <Button type="primary" href="/login">
               {t("GotoLogin")}

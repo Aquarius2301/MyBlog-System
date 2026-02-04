@@ -158,16 +158,7 @@
 // };
 
 import { BackgroundColor } from "@/components/style.type";
-import {
-  Button,
-  Card,
-  Flex,
-  Form,
-  Input,
-  Result,
-  Spin,
-  message as mes,
-} from "antd";
+import { Button, Card, Flex, Form, Input, Result, Spin } from "antd";
 import { LockOutlined } from "@ant-design/icons";
 import { authApi } from "@/api";
 import {
@@ -193,16 +184,12 @@ export const ResetPasswordConfirm = ({ type, token }: Props) => {
   const { t } = useSafeTranslation();
 
   const [finishForm, setFinishForm] = useState(true);
-  const [message, setMessage] = useState("");
+  const [message, setMessage] = useState(t("ConfirmSuccess2"));
 
   /**
    * 1. Confirm token (Query)
    */
-  const {
-    data: confirmData,
-    error: confirmError,
-    isLoading: isConfirmLoading,
-  } = useApiQuery({
+  const { error: confirmError, isLoading: isConfirmLoading } = useApiQuery({
     queryKey: ["confirm", type, token],
     queryFn: () => authApi.confirm(type, token),
     enabled: !!type && !!token,
@@ -217,13 +204,9 @@ export const ResetPasswordConfirm = ({ type, token }: Props) => {
         confirmCode: token,
         newPassword: values.password,
       }),
-    onSuccess: (res) => {
-      if (res.statusCode === 200) {
-        setMessage(res.message);
-        setFinishForm(false);
-      } else {
-        mes.error(res.message);
-      }
+    onSuccess: () => {
+      setMessage(t("PasswordChanged&Login"));
+      setFinishForm(false);
     },
   });
 
@@ -241,7 +224,7 @@ export const ResetPasswordConfirm = ({ type, token }: Props) => {
   /**
    * Token invalid
    */
-  if (confirmError || confirmData === null) {
+  if (confirmError) {
     return (
       <Card style={{ width: "100vw", height: "100vh" }}>
         <Result status="404" title={t("TokenMissing")} />
@@ -263,7 +246,7 @@ export const ResetPasswordConfirm = ({ type, token }: Props) => {
       }}
     >
       <Card>
-        <Result status="success" title={message || confirmData} />
+        <Result status="success" title={message} />
 
         {finishForm && (
           <Form
