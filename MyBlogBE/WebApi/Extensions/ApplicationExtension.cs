@@ -25,6 +25,7 @@ public static class ApplicationExtension
         services.AddScoped<IAuthService, AuthService>();
         services.AddScoped<ICommentService, CommentService>();
         services.AddScoped<IPostService, PostService>();
+        services.AddScoped<ITarotService, TarotService>();
 
         return services;
     }

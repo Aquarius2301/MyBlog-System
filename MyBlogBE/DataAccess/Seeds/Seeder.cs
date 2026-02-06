@@ -12,6 +12,173 @@ public class Seeder
         CreatePosts(context);
         CreatePostLikes(context);
         CreateComments(context);
+        CreateTarotCard(context);
+    }
+
+    private static void CreateTarotCard(MyBlogContext context)
+    {
+        if (!context.TarotCards.Any())
+        {
+            Console.WriteLine("Seeding tarot cards...");
+
+            var TarotCard = new List<TarotCard>
+            {
+                // ===== Major Arcana =====
+                new TarotCard { Name = "The Fool", ImageUrl = "/tarot/the_fool.jpg" },
+                new TarotCard { Name = "The Magician", ImageUrl = "/tarot/the_magician.jpg" },
+                new TarotCard
+                {
+                    Name = "The High Priestess",
+                    ImageUrl = "/tarot/the_high_priestess.jpg",
+                },
+                new TarotCard { Name = "The Empress", ImageUrl = "/tarot/the_empress.jpg" },
+                new TarotCard { Name = "The Emperor", ImageUrl = "/tarot/the_emperor.jpg" },
+                new TarotCard { Name = "The Hierophant", ImageUrl = "/tarot/the_hierophant.jpg" },
+                new TarotCard { Name = "The Lovers", ImageUrl = "/tarot/the_lovers.jpg" },
+                new TarotCard { Name = "The Chariot", ImageUrl = "/tarot/the_chariot.jpg" },
+                new TarotCard { Name = "Strength", ImageUrl = "/tarot/strength.jpg" },
+                new TarotCard { Name = "The Hermit", ImageUrl = "/tarot/the_hermit.jpg" },
+                new TarotCard
+                {
+                    Name = "Wheel of Fortune",
+                    ImageUrl = "/tarot/wheel_of_fortune.jpg",
+                },
+                new TarotCard { Name = "Justice", ImageUrl = "/tarot/justice.jpg" },
+                new TarotCard { Name = "The Hanged Man", ImageUrl = "/tarot/the_hanged_man.jpg" },
+                new TarotCard { Name = "Death", ImageUrl = "/tarot/death.jpg" },
+                new TarotCard { Name = "Temperance", ImageUrl = "/tarot/temperance.jpg" },
+                new TarotCard { Name = "The Devil", ImageUrl = "/tarot/the_devil.jpg" },
+                new TarotCard { Name = "The Tower", ImageUrl = "/tarot/the_tower.jpg" },
+                new TarotCard { Name = "The Star", ImageUrl = "/tarot/the_star.jpg" },
+                new TarotCard { Name = "The Moon", ImageUrl = "/tarot/the_moon.jpg" },
+                new TarotCard { Name = "The Sun", ImageUrl = "/tarot/the_sun.jpg" },
+                new TarotCard { Name = "Judgement", ImageUrl = "/tarot/judgement.jpg" },
+                new TarotCard { Name = "The World", ImageUrl = "/tarot/the_world.jpg" },
+                // ===== Minor Arcana – Wands =====
+                new TarotCard { Name = "Ace of Wands", ImageUrl = "/tarot/ace_of_wands.jpg" },
+                new TarotCard { Name = "Two of Wands", ImageUrl = "/tarot/two_of_wands.jpg" },
+                new TarotCard { Name = "Three of Wands", ImageUrl = "/tarot/three_of_wands.jpg" },
+                new TarotCard { Name = "Four of Wands", ImageUrl = "/tarot/four_of_wands.jpg" },
+                new TarotCard { Name = "Five of Wands", ImageUrl = "/tarot/five_of_wands.jpg" },
+                new TarotCard { Name = "Six of Wands", ImageUrl = "/tarot/six_of_wands.jpg" },
+                new TarotCard { Name = "Seven of Wands", ImageUrl = "/tarot/seven_of_wands.jpg" },
+                new TarotCard { Name = "Eight of Wands", ImageUrl = "/tarot/eight_of_wands.jpg" },
+                new TarotCard { Name = "Nine of Wands", ImageUrl = "/tarot/nine_of_wands.jpg" },
+                new TarotCard { Name = "Ten of Wands", ImageUrl = "/tarot/ten_of_wands.jpg" },
+                new TarotCard { Name = "Page of Wands", ImageUrl = "/tarot/page_of_wands.jpg" },
+                new TarotCard { Name = "Knight of Wands", ImageUrl = "/tarot/knight_of_wands.jpg" },
+                new TarotCard { Name = "Queen of Wands", ImageUrl = "/tarot/queen_of_wands.jpg" },
+                new TarotCard { Name = "King of Wands", ImageUrl = "/tarot/king_of_wands.jpg" },
+                // ===== Minor Arcana – Cups =====
+                new TarotCard { Name = "Ace of Cups", ImageUrl = "/tarot/ace_of_cups.jpg" },
+                new TarotCard { Name = "Two of Cups", ImageUrl = "/tarot/two_of_cups.jpg" },
+                new TarotCard { Name = "Three of Cups", ImageUrl = "/tarot/three_of_cups.jpg" },
+                new TarotCard { Name = "Four of Cups", ImageUrl = "/tarot/four_of_cups.jpg" },
+                new TarotCard { Name = "Five of Cups", ImageUrl = "/tarot/five_of_cups.jpg" },
+                new TarotCard { Name = "Six of Cups", ImageUrl = "/tarot/six_of_cups.jpg" },
+                new TarotCard { Name = "Seven of Cups", ImageUrl = "/tarot/seven_of_cups.jpg" },
+                new TarotCard { Name = "Eight of Cups", ImageUrl = "/tarot/eight_of_cups.jpg" },
+                new TarotCard { Name = "Nine of Cups", ImageUrl = "/tarot/nine_of_cups.jpg" },
+                new TarotCard { Name = "Ten of Cups", ImageUrl = "/tarot/ten_of_cups.jpg" },
+                new TarotCard { Name = "Page of Cups", ImageUrl = "/tarot/page_of_cups.jpg" },
+                new TarotCard { Name = "Knight of Cups", ImageUrl = "/tarot/knight_of_cups.jpg" },
+                new TarotCard { Name = "Queen of Cups", ImageUrl = "/tarot/queen_of_cups.jpg" },
+                new TarotCard { Name = "King of Cups", ImageUrl = "/tarot/king_of_cups.jpg" },
+                // ===== Minor Arcana – Swords =====
+                new TarotCard { Name = "Ace of Swords", ImageUrl = "/tarot/ace_of_swords.jpg" },
+                new TarotCard { Name = "Two of Swords", ImageUrl = "/tarot/two_of_swords.jpg" },
+                new TarotCard { Name = "Three of Swords", ImageUrl = "/tarot/three_of_swords.jpg" },
+                new TarotCard { Name = "Four of Swords", ImageUrl = "/tarot/four_of_swords.jpg" },
+                new TarotCard { Name = "Five of Swords", ImageUrl = "/tarot/five_of_swords.jpg" },
+                new TarotCard { Name = "Six of Swords", ImageUrl = "/tarot/six_of_swords.jpg" },
+                new TarotCard { Name = "Seven of Swords", ImageUrl = "/tarot/seven_of_swords.jpg" },
+                new TarotCard { Name = "Eight of Swords", ImageUrl = "/tarot/eight_of_swords.jpg" },
+                new TarotCard { Name = "Nine of Swords", ImageUrl = "/tarot/nine_of_swords.jpg" },
+                new TarotCard { Name = "Ten of Swords", ImageUrl = "/tarot/ten_of_swords.jpg" },
+                new TarotCard { Name = "Page of Swords", ImageUrl = "/tarot/page_of_swords.jpg" },
+                new TarotCard
+                {
+                    Name = "Knight of Swords",
+                    ImageUrl = "/tarot/knight_of_swords.jpg",
+                },
+                new TarotCard { Name = "Queen of Swords", ImageUrl = "/tarot/queen_of_swords.jpg" },
+                new TarotCard { Name = "King of Swords", ImageUrl = "/tarot/king_of_swords.jpg" },
+                // ===== Minor Arcana – Pentacles =====
+                new TarotCard
+                {
+                    Name = "Ace of Pentacles",
+                    ImageUrl = "/tarot/ace_of_pentacles.jpg",
+                },
+                new TarotCard
+                {
+                    Name = "Two of Pentacles",
+                    ImageUrl = "/tarot/two_of_pentacles.jpg",
+                },
+                new TarotCard
+                {
+                    Name = "Three of Pentacles",
+                    ImageUrl = "/tarot/three_of_pentacles.jpg",
+                },
+                new TarotCard
+                {
+                    Name = "Four of Pentacles",
+                    ImageUrl = "/tarot/four_of_pentacles.jpg",
+                },
+                new TarotCard
+                {
+                    Name = "Five of Pentacles",
+                    ImageUrl = "/tarot/five_of_pentacles.jpg",
+                },
+                new TarotCard
+                {
+                    Name = "Six of Pentacles",
+                    ImageUrl = "/tarot/six_of_pentacles.jpg",
+                },
+                new TarotCard
+                {
+                    Name = "Seven of Pentacles",
+                    ImageUrl = "/tarot/seven_of_pentacles.jpg",
+                },
+                new TarotCard
+                {
+                    Name = "Eight of Pentacles",
+                    ImageUrl = "/tarot/eight_of_pentacles.jpg",
+                },
+                new TarotCard
+                {
+                    Name = "Nine of Pentacles",
+                    ImageUrl = "/tarot/nine_of_pentacles.jpg",
+                },
+                new TarotCard
+                {
+                    Name = "Ten of Pentacles",
+                    ImageUrl = "/tarot/ten_of_pentacles.jpg",
+                },
+                new TarotCard
+                {
+                    Name = "Page of Pentacles",
+                    ImageUrl = "/tarot/page_of_pentacles.jpg",
+                },
+                new TarotCard
+                {
+                    Name = "Knight of Pentacles",
+                    ImageUrl = "/tarot/knight_of_pentacles.jpg",
+                },
+                new TarotCard
+                {
+                    Name = "Queen of Pentacles",
+                    ImageUrl = "/tarot/queen_of_pentacles.jpg",
+                },
+                new TarotCard
+                {
+                    Name = "King of Pentacles",
+                    ImageUrl = "/tarot/king_of_pentacles.jpg",
+                },
+            };
+
+            context.TarotCards.AddRange(TarotCard);
+            context.SaveChanges();
+        }
     }
 
     private static void CreateAccounts(MyBlogContext context)

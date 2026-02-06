@@ -39,6 +39,11 @@ public interface IUnitOfWork
     IRepository<CommentLike> CommentLikes { get; }
 
     /// <summary>
+    /// Gets the tarot card repository.
+    /// </summary>
+    IRepository<TarotCard> TarotCards { get; }
+
+    /// <summary>
     /// Begins a new database transaction.
     /// </summary>
     /// <returns></returns>
