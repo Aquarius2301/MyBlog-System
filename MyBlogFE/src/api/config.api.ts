@@ -42,7 +42,7 @@ const apiConfig = axios.create({
     // "Accept-Language": i18n.language,
     // Do not set Authorization here to avoid storing old value at file initialization
   },
-  timeout: 10000,
+  timeout: 60000,
   withCredentials: true, // IMPORTANT: To send HttpOnly Cookie
 });
 
@@ -57,7 +57,7 @@ apiConfig.interceptors.request.use(
   (error) => {
     errorLog("Request error:", error);
     return Promise.reject(error);
-  }
+  },
 );
 
 // Response Interceptor
@@ -66,7 +66,7 @@ apiConfig.interceptors.response.use(
     log(
       `Received: ${response.config.method?.toUpperCase()} ${
         response.config.url
-      } ${response.status}`
+      } ${response.status}`,
     );
 
     return response.data;
@@ -102,7 +102,7 @@ apiConfig.interceptors.response.use(
     }
 
     return Promise.reject(error);
-  }
+  },
 );
 
 export default apiConfig;

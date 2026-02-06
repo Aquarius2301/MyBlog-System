@@ -5,6 +5,7 @@ import {
   LoginPage,
   MyProfilePage,
   ProfilePage,
+  TarotPage,
   ViewPostPage,
 } from "@/pages";
 import type { ComponentType } from "react";
@@ -29,6 +30,7 @@ export const routes: RouteConfig[] = [
   { path: "/profile/me", component: MyProfilePage, isProtected: true },
   { path: "/account/search", component: AccountSearchPage, isProtected: true },
   { path: "/confirm", component: ConfirmPage, isProtected: false },
+  { path: "/tarot", component: TarotPage, isProtected: true },
 ];
 
 //   { path: "/", component: HomePage, protected: true },
