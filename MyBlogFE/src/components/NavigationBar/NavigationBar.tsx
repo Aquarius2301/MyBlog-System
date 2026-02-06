@@ -1,5 +1,6 @@
 import {
   Affix,
+  Button,
   Dropdown,
   Flex,
   Switch,
@@ -11,6 +12,7 @@ import {
   LogoutOutlined,
   MoonOutlined,
   SearchOutlined,
+  StarOutlined,
   SunOutlined,
   UserOutlined,
 } from "@ant-design/icons";
@@ -67,6 +69,12 @@ const NavigationBar = ({ title }: NavigationBarProps) => {
               checkedChildren={<SunOutlined />}
               unCheckedChildren={<MoonOutlined />}
               checked={themeMode === "light"}
+            />
+            <Button
+              style={{ marginLeft: 10 }}
+              onClick={() => navigate("/tarot")}
+              icon={<StarOutlined />}
+              type="text"
             />
           </div>
 
