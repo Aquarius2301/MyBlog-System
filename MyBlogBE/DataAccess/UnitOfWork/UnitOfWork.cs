@@ -11,6 +11,7 @@ public class UnitOfWork : IUnitOfWork
     public IRepository<PostLike> PostLikes { get; }
     public IRepository<Comment> Comments { get; }
     public IRepository<CommentLike> CommentLikes { get; }
+    public IRepository<TarotCard> TarotCards { get; }
     private readonly MyBlogContext _context;
 
     public UnitOfWork(
@@ -20,7 +21,8 @@ public class UnitOfWork : IUnitOfWork
         IRepository<Post> postRepository,
         IRepository<PostLike> postLikeRepository,
         IRepository<Comment> commentRepository,
-        IRepository<CommentLike> commentLikeRepository
+        IRepository<CommentLike> commentLikeRepository,
+        IRepository<TarotCard> tarotCardRepository
     )
     {
         _context = context;
@@ -30,6 +32,7 @@ public class UnitOfWork : IUnitOfWork
         PostLikes = postLikeRepository;
         Comments = commentRepository;
         CommentLikes = commentLikeRepository;
+        TarotCards = tarotCardRepository;
     }
 
     public async Task BeginTransactionAsync()

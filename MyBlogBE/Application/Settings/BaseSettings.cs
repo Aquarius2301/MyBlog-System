@@ -25,6 +25,8 @@ public class BaseSettings
     /// </summary>
     public string FrontendUrl { get; set; } = null!;
 
+    public Gemini Gemini { get; set; } = null!;
+
     /// <summary>
     /// Configuration settings for Cloudinary integration.
     /// </summary>
