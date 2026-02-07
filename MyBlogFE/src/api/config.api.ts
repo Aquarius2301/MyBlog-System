@@ -90,7 +90,11 @@ apiConfig.interceptors.response.use(
     ) {
       errorLog("Response error:", error);
       try {
-        const res = await axios.get(`${getBaseAPI}/auth/refresh`);
+        const res = await axios.post(
+          `${getBaseAPI}/api/auth/refresh`,
+          {},
+          { withCredentials: true },
+        );
         if (res.status === 200) {
           log("Token refreshed successfully. Retrying original request.");
           return apiConfig(originalRequest);
