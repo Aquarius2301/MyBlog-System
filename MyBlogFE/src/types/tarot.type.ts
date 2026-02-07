@@ -1,9 +1,13 @@
-export interface TarotReadingRequest {
-  numberOfCards: number | null;
-  spreadType: string | null;
-  time: string | null;
+export interface GuidedTarotRequest {
+  numberOfCards: number;
+  spreadType: string;
+  time: string;
   language: string;
-  question: string | null;
+}
+
+export interface CustomTarotRequest {
+  question: string;
+  language: string;
 }
 
 export interface TarotReadingResponse {
