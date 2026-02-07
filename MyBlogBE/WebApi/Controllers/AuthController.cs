@@ -1,3 +1,4 @@
+using System.Net;
 using Application.Dtos;
 using Application.Exceptions;
 using Application.Services.Interfaces;
@@ -64,31 +65,17 @@ public class AuthController : BaseController
         // Save cookie on server
         if (res != null)
         {
-            Response.Cookies.Append(
+            CookieHelper.AddCookie(
+                Response,
                 "accessToken",
                 res.AccessToken,
-                new CookieOptions
-                {
-                    HttpOnly = true,
-                    Secure = true,
-                    SameSite = SameSiteMode.Strict,
-                    Expires = DateTimeOffset.UtcNow.AddMinutes(
-                        _settings.AccessTokenDurationMinutes
-                    ),
-                    Path = "/",
-                }
+                _settings.AccessTokenDurationMinutes
             );
-            Response.Cookies.Append(
+            CookieHelper.AddCookie(
+                Response,
                 "refreshToken",
                 res.RefreshToken,
-                new CookieOptions
-                {
-                    HttpOnly = true,
-                    Secure = true,
-                    SameSite = SameSiteMode.Strict,
-                    Expires = DateTimeOffset.UtcNow.AddDays(_settings.RefreshTokenDurationDays),
-                    Path = "/",
-                }
+                _settings.RefreshTokenDurationDays * 24 * 60
             );
             return HandleResponse(Success<object>(null, "Success"));
         }
@@ -207,29 +194,25 @@ public class AuthController : BaseController
 
         if (string.IsNullOrWhiteSpace(refreshToken))
         {
-            throw new UnauthorizedException("InvalidToken");
+            CookieHelper.RemoveCookie(Response, "refreshToken");
+            throw new UnauthorizedException("InvalidToken1");
         }
         var res = await _service.GetRefreshTokenAsync(refreshToken);
 
         if (res != null)
         {
-            Response.Cookies.Append(
+            CookieHelper.AddCookie(
+                Response,
                 "accessToken",
                 res.AccessToken,
-                new CookieOptions
-                {
-                    HttpOnly = true,
-                    Secure = true,
-                    SameSite = SameSiteMode.Strict,
-                    Expires = DateTimeOffset.UtcNow.AddDays(_settings.RefreshTokenDurationDays),
-                    Path = "/",
-                }
+                _settings.AccessTokenDurationMinutes
             );
 
             return HandleResponse(Success<object>(null, "Success"));
         }
 
-        throw new UnauthorizedException("InvalidToken");
+        CookieHelper.RemoveCookie(Response, "refreshToken");
+        throw new UnauthorizedException("InvalidToken2");
     }
 
     /// <summary>
@@ -294,27 +277,8 @@ public class AuthController : BaseController
     {
         await _service.RemoveRefreshAsync();
 
-        Response.Cookies.Delete(
-            "accessToken",
-            new CookieOptions
-            {
-                HttpOnly = true,
-                Secure = true,
-                SameSite = SameSiteMode.Strict,
-                Path = "/",
-            }
-        );
-
-        Response.Cookies.Delete(
-            "refreshToken",
-            new CookieOptions
-            {
-                HttpOnly = true,
-                Secure = true,
-                SameSite = SameSiteMode.Strict,
-                Path = "/",
-            }
-        );
+        CookieHelper.RemoveCookie(Response, "accessToken");
+        CookieHelper.RemoveCookie(Response, "refreshToken");
 
         return HandleResponse(Success<object>(null));
     }
