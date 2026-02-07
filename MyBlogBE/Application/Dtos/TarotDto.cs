@@ -9,11 +9,16 @@ public class TarotReadingResponse
     public string ImageUrl { get; set; } = null!;
 }
 
-public class TarotReadingRequest
+public class GuidedTarotRequest
 {
-    public int? NumberOfCards { get; set; } = null;
-    public string? SpreadType { get; set; } = null;
-    public string? Time { get; set; } = null;
+    public int NumberOfCards { get; set; } = 3;
+    public string SpreadType { get; set; } = null!;
+    public string Time { get; set; } = null!;
     public string Language { get; set; } = "en";
-    public string? Question { get; set; } = null;
+}
+
+public class CustomTarotRequest
+{
+    public string Question { get; set; } = null!;
+    public string Language { get; set; } = "en";
 }
