@@ -136,7 +136,7 @@ public class TarotController : BaseController
         - 5 or more cards: Complex problems, deep spiritual guidance, or major life shifts.
         If the question already contains a card count, use that.
         If the question already contains the card name, use 0.
-        Return ONLY the number (1, 3, 5, 6, 7,...). No text, no explanation.";
+        Return ONLY the number (1, 3, 5, 6, 7, 11...). No text, no explanation.";
 
         var requestBody = new
         {
@@ -144,7 +144,7 @@ public class TarotController : BaseController
             generationConfig = new
             {
                 temperature = 0.1, // Low temperature for focused responses
-                maxOutputTokens = 1, // Only return a single digit
+                maxOutputTokens = 2, // Only return a number, so limit tokens
             },
         };
 
