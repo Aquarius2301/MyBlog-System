@@ -30,7 +30,8 @@ public static class WebExtension
                         .WithOrigins(frontendUrl, chromeExtensionUrl)
                         .AllowAnyHeader()
                         .AllowAnyMethod()
-                        .AllowCredentials();
+                        .AllowCredentials()
+                        .SetIsOriginAllowedToAllowWildcardSubdomains();
                 }
             );
         });
