@@ -1,0 +1,44 @@
+# Build output
+**/bin/
+**/obj/
+**/publish/
+**/Logs/
+
+# IDEs and editors
+.vscode/
+.vs/
+.idea/
+*.suo
+*.user
+*.userosscache
+
+# Git
+.git
+.gitignore
+
+# Docker Compose / local docker configs (keep Dockerfile)
+docker-compose*.yml
+docker-compose.override.yml
+
+# NuGet / packages
+*.nupkg
+packages/
+.nuget/
+
+# Node
+node_modules/
+
+# Test / coverage / logs
+TestResults/
+coverage/
+*.log
+logs/
+
+# OS artifacts
+.DS_Store
+Thumbs.db
+
+# Secrets / environment
+.env
+*.secret
+secrets/
