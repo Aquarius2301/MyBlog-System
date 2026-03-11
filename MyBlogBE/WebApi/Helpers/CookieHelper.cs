@@ -19,7 +19,7 @@ public static class CookieHelper
             {
                 HttpOnly = true,
                 Secure = !_isDevelopment,
-                SameSite = _isDevelopment ? SameSiteMode.Lax : SameSiteMode.Strict,
+                SameSite = SameSiteMode.None,
                 Expires = DateTimeOffset.UtcNow.AddMinutes(duration),
                 Path = "/",
             }
