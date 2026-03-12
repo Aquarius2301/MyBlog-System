@@ -12,6 +12,7 @@ namespace Application.Services.Implementations;
 public class EmailService : IEmailService
 {
     private readonly BaseSettings _settings;
+    private readonly HttpClient _httpClient = new HttpClient();
 
     /// <summary>
     /// Initializes a new instance of the <see cref="EmailService"/> class.
@@ -22,38 +23,67 @@ public class EmailService : IEmailService
         _settings = options.Value;
     }
 
+    // public async Task SendEmailAsync(string to, string subject, string body, bool isHtml = true)
+    // {
+    //     var message = new MimeMessage();
+    //     message.From.Add(
+    //         new MailboxAddress(
+    //             _settings.EmailSettings.SenderName,
+    //             _settings.EmailSettings.SenderEmail
+    //         )
+    //     );
+    //     message.To.Add(new MailboxAddress("", to));
+    //     message.Subject = subject;
+
+    //     var builder = new BodyBuilder();
+    //     if (isHtml)
+    //         builder.HtmlBody = body;
+    //     else
+    //         builder.TextBody = body;
+
+    //     message.Body = builder.ToMessageBody();
+
+    //     using var client = new SmtpClient();
+    //     await client.ConnectAsync(
+    //         _settings.EmailSettings.SmtpServer,
+    //         _settings.EmailSettings.Port,
+    //         MailKit.Security.SecureSocketOptions.StartTls
+    //     );
+    //     await client.AuthenticateAsync(
+    //         _settings.EmailSettings.Username,
+    //         _settings.EmailSettings.Password
+    //     );
+    //     await client.SendAsync(message);
+    //     await client.DisconnectAsync(true);
+    // }
+
     public async Task SendEmailAsync(string to, string subject, string body, bool isHtml = true)
     {
-        var message = new MimeMessage();
-        message.From.Add(
-            new MailboxAddress(
-                _settings.EmailSettings.SenderName,
-                _settings.EmailSettings.SenderEmail
-            )
-        );
-        message.To.Add(new MailboxAddress("", to));
-        message.Subject = subject;
+        var request = new HttpRequestMessage(HttpMethod.Post, "https://api.resend.com/emails");
 
-        var builder = new BodyBuilder();
-        if (isHtml)
-            builder.HtmlBody = body;
-        else
-            builder.TextBody = body;
+        request.Headers.Add("Authorization", $"Bearer {_settings.EmailSettings.ApiKey}");
 
-        message.Body = builder.ToMessageBody();
+        var emailData = new
+        {
+            from = $"{_settings.EmailSettings.SenderName} <{_settings.EmailSettings.SenderEmail}>",
+            to = new[] { to },
+            subject = subject,
+            html = body,
+        };
 
-        using var client = new SmtpClient();
-        await client.ConnectAsync(
-            _settings.EmailSettings.SmtpServer,
-            _settings.EmailSettings.Port,
-            MailKit.Security.SecureSocketOptions.StartTls
+        request.Content = new StringContent(
+            System.Text.Json.JsonSerializer.Serialize(emailData),
+            System.Text.Encoding.UTF8,
+            "application/json"
         );
-        await client.AuthenticateAsync(
-            _settings.EmailSettings.Username,
-            _settings.EmailSettings.Password
-        );
-        await client.SendAsync(message);
-        await client.DisconnectAsync(true);
+
+        var response = await _httpClient.SendAsync(request);
+
+        if (!response.IsSuccessStatusCode)
+        {
+            var error = await response.Content.ReadAsStringAsync();
+            throw new Exception($"Email send failed: {error}");
+        }
     }
 
     public async Task SendRegisterEmailAsync(

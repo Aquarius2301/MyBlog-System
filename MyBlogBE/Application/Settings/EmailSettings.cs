@@ -34,4 +34,9 @@ public class EmailSettings
     /// Password for SMTP authentication.
     /// </summary>
     public string Password { get; set; } = string.Empty;
+
+    /// <summary>
+    /// API key for Resend email service.
+    /// </summary>
+    public string ApiKey { get; set; } = string.Empty;
 }
