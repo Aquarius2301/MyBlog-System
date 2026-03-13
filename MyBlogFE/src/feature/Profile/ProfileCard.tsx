@@ -1,9 +1,9 @@
 import { formatDate, formatDateTime } from "@/utils";
-import { Card, Dropdown, Flex, Tag } from "antd";
+import { Button, Card, Dropdown, Flex, Tag } from "antd";
 import { Text } from "@/components";
 import { ProfileAvatar } from "./ProfileAvatar";
-import { useSafeTranslation } from "@/hooks";
-import type { AccountData } from "@/types/account.type";
+import { useApiMutation, useSafeTranslation } from "@/hooks";
+import type { AccountData, AccountResponse } from "@/types/account.type";
 import {
   DeleteFilled,
   EditOutlined,
@@ -14,6 +14,8 @@ import EditProfileModal from "./modals/EditProfileModal";
 import { useState } from "react";
 import SelfRemoveModal from "./modals/SelfRemoveModal";
 import ChangePasswordModal from "./modals/ChangePasswordModal";
+import { followApi } from "@/api";
+import { useQueryClient } from "@tanstack/react-query";
 
 export type ProfileCardProps = {
   account: AccountData;
@@ -22,6 +24,7 @@ export type ProfileCardProps = {
 type ModalType = "updateProfile" | "changePassword" | "selfRemove";
 const ProfileCard = ({ account }: ProfileCardProps) => {
   const [openModal, setModalOpen] = useState<ModalType | null>(null);
+  const queryClient = useQueryClient();
 
   const { t } = useSafeTranslation();
 
@@ -44,6 +47,38 @@ const ProfileCard = ({ account }: ProfileCardProps) => {
     },
   ];
 
+  const updateProfile = (isFollowing: boolean) => {
+    queryClient.setQueryData(
+      ["getProfile", account.username],
+      (oldData: AccountResponse | undefined) => {
+        if (!oldData) return oldData;
+        return {
+          ...oldData,
+          data: {
+            ...oldData.data,
+            isFollowing,
+          },
+        };
+      },
+    );
+  };
+
+  const { isLoading: followLoading, mutate: follow } = useApiMutation({
+    mutationKey: ["follow", account.id],
+    mutationFn: followApi.follow,
+    onSuccess: () => {
+      updateProfile(true);
+    },
+  });
+
+  const { isLoading: unfollowLoading, mutate: unfollow } = useApiMutation({
+    mutationKey: ["follow", account.id],
+    mutationFn: followApi.unfollow,
+    onSuccess: () => {
+      updateProfile(false);
+    },
+  });
+
   return (
     <Card style={{ marginBottom: 24 }}>
       <Flex vertical align="center" gap={8}>
@@ -52,10 +87,10 @@ const ProfileCard = ({ account }: ProfileCardProps) => {
           size={128}
           editable={account.isOwner}
         />
-
         <div style={{ textAlign: "center" }}>
           <Text as={"p"} bold fontSize="xxlarge">
-            {account.displayName}
+            {account.displayName}{" "}
+            {account.isFollowing && <Tag color="blue">{t("Following")}</Tag>}
           </Text>
           <Text
             as={"p"}
@@ -67,6 +102,30 @@ const ProfileCard = ({ account }: ProfileCardProps) => {
         <Tag variant="outlined" color={"blue"}>
           {account.status}
         </Tag>
+        {account.isOwner ? null : account.isFollowing ? (
+          <Button
+            type="default"
+            loading={unfollowLoading}
+            disabled={unfollowLoading}
+            onClick={() =>
+              unfollowLoading || followLoading || unfollow(account.id)
+            }
+            danger
+          >
+            {t("Unfollow")}
+          </Button>
+        ) : (
+          <Button
+            type="default"
+            loading={followLoading}
+            disabled={followLoading}
+            onClick={() =>
+              unfollowLoading || followLoading || follow(account.id)
+            }
+          >
+            {t("Follow")}
+          </Button>
+        )}
         <Card style={{ marginTop: 16, width: "100%" }}>
           {account.isOwner && (
             <div style={{ textAlign: "right" }}>

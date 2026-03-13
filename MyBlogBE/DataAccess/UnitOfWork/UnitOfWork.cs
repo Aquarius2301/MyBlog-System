@@ -12,6 +12,7 @@ public class UnitOfWork : IUnitOfWork
     public IRepository<Comment> Comments { get; }
     public IRepository<CommentLike> CommentLikes { get; }
     public IRepository<TarotCard> TarotCards { get; }
+    public IRepository<Follow> Follows { get; }
     private readonly MyBlogContext _context;
 
     public UnitOfWork(
@@ -22,7 +23,8 @@ public class UnitOfWork : IUnitOfWork
         IRepository<PostLike> postLikeRepository,
         IRepository<Comment> commentRepository,
         IRepository<CommentLike> commentLikeRepository,
-        IRepository<TarotCard> tarotCardRepository
+        IRepository<TarotCard> tarotCardRepository,
+        IRepository<Follow> followRepository
     )
     {
         _context = context;
@@ -33,6 +35,7 @@ public class UnitOfWork : IUnitOfWork
         Comments = commentRepository;
         CommentLikes = commentLikeRepository;
         TarotCards = tarotCardRepository;
+        Follows = followRepository;
     }
 
     public async Task BeginTransactionAsync()

@@ -44,6 +44,11 @@ public interface IUnitOfWork
     IRepository<TarotCard> TarotCards { get; }
 
     /// <summary>
+    /// Gets the follow repository.
+    /// </summary>
+    IRepository<Follow> Follows { get; }
+
+    /// <summary>
     /// Begins a new database transaction.
     /// </summary>
     /// <returns></returns>

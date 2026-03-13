@@ -10,6 +10,7 @@ export interface AccountData {
   dateOfBirth: string;
   avatarUrl: string;
   status: string;
+  isFollowing: boolean;
   createdAt: string;
 }
 

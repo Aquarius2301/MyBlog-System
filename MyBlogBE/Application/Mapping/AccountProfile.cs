@@ -28,6 +28,15 @@ public class AccountProfile : Profile
                 dest => dest.AvatarUrl,
                 opt => opt.MapFrom(src => src.Picture != null ? src.Picture.Link : "")
             )
+            .ForMember(
+                dest => dest.IsFollowing,
+                opt =>
+                    opt.MapFrom(src =>
+                        src.Followers.Any(f =>
+                            f.AccountId == currentAccId && f.FollowingId == src.Id
+                        )
+                    )
+            )
             .ForMember(dest => dest.IsOwner, opt => opt.MapFrom(src => src.Id == currentAccId));
 
         CreateMap<Account, RegisterResponse>();
