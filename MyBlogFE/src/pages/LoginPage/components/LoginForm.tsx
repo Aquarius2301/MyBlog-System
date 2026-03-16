@@ -1,4 +1,4 @@
-import { Button, Divider, Form, Input, App } from "antd";
+import { Button, Divider, Form, Input, App, Card } from "antd";
 import Title from "antd/es/typography/Title";
 import { UserOutlined, LockOutlined } from "@ant-design/icons";
 import { useNavigate } from "react-router-dom";
@@ -90,6 +90,15 @@ export const LoginForm = () => {
           style={{ width: "100%" }}
         />
       </Form.Item>
+
+      {/* Testing credentials */}
+      {import.meta.env.VITE_TESTING === "true" && (
+        <Card size="small" style={{ marginBottom: 6, width: "100%" }}>
+          Username: testuser
+          <br />
+          Password: 123
+        </Card>
+      )}
 
       <Button type="primary" htmlType="submit" loading={isLoading}>
         {t("Login")}

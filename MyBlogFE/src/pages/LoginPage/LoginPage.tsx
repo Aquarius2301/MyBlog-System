@@ -75,8 +75,8 @@ const LoginPage = () => {
       >
         <Card // .ant-card
           style={{
-            width: "60%",
-            height: "70%",
+            width: "70%",
+            height: "80%",
             // backgroundColor: "transparent",
           }}
           styles={{ body: { width: "100%", height: "100%" } }}
