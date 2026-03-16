@@ -32,7 +32,7 @@ public class FollowService : IFollowService
             return _unitOfWork.Follows.ReadOnly().Count(f => f.FollowingId == followingId); // Already following, do nothing
         }
 
-        var follow = new Follow { AccountId = AccountId, FollowingId = followingId };
+        var follow = new Follow { AccountId = AccountId, FollowingId = followingId, CreatedAt = DateTime.UtcNow };
         _unitOfWork.Follows.Add(follow);
 
         await _unitOfWork.SaveChangesAsync();

@@ -318,6 +318,7 @@ public class Seeder
                             Id = Guid.NewGuid(),
                             FollowingId = followAcc.Id,
                             AccountId = acc.Id,
+                            CreatedAt = DateTime.UtcNow.AddDays(Random.Shared.Next(-100, 0)),
                         }
                     );
                 }
