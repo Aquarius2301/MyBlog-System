@@ -10,7 +10,14 @@ export type ImageAvatarProps = {
 const ImageAvatar = (props: ImageAvatarProps) => {
   const { url, size = "default", shape = "circle" } = props;
 
-  return <Avatar size={size} shape={shape} src={url} icon={<UserOutlined />} />;
+  return (
+    <Avatar
+      size={size}
+      shape={shape}
+      src={url == "" ? undefined : url}
+      icon={<UserOutlined />}
+    />
+  );
 };
 
 export default ImageAvatar;

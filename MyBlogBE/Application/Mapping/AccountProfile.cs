@@ -37,6 +37,10 @@ public class AccountProfile : Profile
                         )
                     )
             )
+            .ForMember(
+                dest => dest.Followers,
+                opt => opt.MapFrom(src => src.Followers.Count(f => f.FollowingId == src.Id))
+            )
             .ForMember(dest => dest.IsOwner, opt => opt.MapFrom(src => src.Id == currentAccId));
 
         CreateMap<Account, RegisterResponse>();

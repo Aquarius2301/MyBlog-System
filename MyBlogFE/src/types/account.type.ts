@@ -12,6 +12,7 @@ export interface AccountData {
   status: string;
   isFollowing: boolean;
   createdAt: string;
+  followers: number;
 }
 
 export interface AccountNameData {

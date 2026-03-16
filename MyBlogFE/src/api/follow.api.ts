@@ -4,11 +4,11 @@ import apiConfig from "./config.api";
 const url = "api/follows";
 
 const accountApi = {
-  follow: async (accountId: string): Promise<ApiResponse<null>> => {
+  follow: async (accountId: string): Promise<ApiResponse<number>> => {
     return await apiConfig.post(`${url}/${accountId}`);
   },
 
-  unfollow: async (accountId: string): Promise<ApiResponse<null>> => {
+  unfollow: async (accountId: string): Promise<ApiResponse<number>> => {
     return await apiConfig.delete(`${url}/${accountId}`);
   },
 };

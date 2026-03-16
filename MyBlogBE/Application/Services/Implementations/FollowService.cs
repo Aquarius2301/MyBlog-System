@@ -1,4 +1,7 @@
+using Application.Dtos;
 using Application.Services.Interfaces;
+using AutoMapper;
+using AutoMapper.QueryableExtensions;
 using BusinessObject.Entities;
 using DataAccess.UnitOfWork;
 using Microsoft.EntityFrameworkCore;
@@ -7,15 +10,17 @@ public class FollowService : IFollowService
 {
     private readonly IUnitOfWork _unitOfWork;
     private readonly IJwtService _jwtService;
+    private readonly IMapper _mapper;
     private Guid AccountId => _jwtService.GetAccountInfo().Id;
 
-    public FollowService(IUnitOfWork unitOfWork, IJwtService jwtService)
+    public FollowService(IUnitOfWork unitOfWork, IJwtService jwtService, IMapper mapper)
     {
         _unitOfWork = unitOfWork;
         _jwtService = jwtService;
+        _mapper = mapper;
     }
 
-    public async Task FollowUserAsync(Guid followingId)
+    public async Task<int> FollowUserAsync(Guid followingId)
     {
         var existedFollow = await _unitOfWork
             .Follows.ReadOnly()
@@ -24,16 +29,18 @@ public class FollowService : IFollowService
 
         if (existedFollow != null)
         {
-            return; // Already following, do nothing
+            return _unitOfWork.Follows.ReadOnly().Count(f => f.FollowingId == followingId); // Already following, do nothing
         }
 
         var follow = new Follow { AccountId = AccountId, FollowingId = followingId };
         _unitOfWork.Follows.Add(follow);
 
         await _unitOfWork.SaveChangesAsync();
+
+        return _unitOfWork.Follows.ReadOnly().Count(f => f.FollowingId == followingId);
     }
 
-    public async Task UnfollowUserAsync(Guid followingId)
+    public async Task<int> UnfollowUserAsync(Guid followingId)
     {
         var existedFollow = await _unitOfWork
             .Follows.ReadOnly()
@@ -42,11 +49,30 @@ public class FollowService : IFollowService
 
         if (existedFollow == null)
         {
-            return; // Not following, do nothing
+            return _unitOfWork.Follows.ReadOnly().Count(f => f.FollowingId == followingId); // Not following, do nothing
         }
 
         _unitOfWork.Follows.Remove(existedFollow);
 
         await _unitOfWork.SaveChangesAsync();
+
+        return _unitOfWork.Follows.ReadOnly().Count(f => f.FollowingId == followingId);
+    }
+
+    public async Task<List<AccountNameResponse>> GetFollowersAsync(
+        Guid userId,
+        int pageSize,
+        DateTime? cursor
+    )
+    {
+        var followers = await _unitOfWork
+            .Follows.ReadOnly()
+            .Where(f => f.FollowingId == userId && (cursor == null || f.CreatedAt < cursor))
+            .OrderByDescending(f => f.CreatedAt)
+            .Take(pageSize)
+            .ProjectTo<AccountNameResponse>(_mapper.ConfigurationProvider)
+            .ToListAsync();
+
+        return followers;
     }
 }

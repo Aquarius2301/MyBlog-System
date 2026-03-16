@@ -201,13 +201,6 @@ public class Seeder
                             "100000.2WBYMJzOMwL6A4WFMqocgA==.mOhKh2DlCdEv5kF51VSfWo9ddeeeayxz9kH7lwI4EAI=",
                         Status = StatusType.Active.Code,
                         Email = $"user{i + 1}@example.com",
-                        Picture = new Picture
-                        {
-                            Id = Guid.NewGuid(),
-                            AccountId = id,
-                            PublicId = $"profile_user{i + 1}",
-                            Link = $"/profiles/user{i + 1}/avatar.jpg",
-                        },
                         CreatedAt = DateTime.UtcNow.AddDays(Random.Shared.Next(-100, 0)),
                     }
                 );

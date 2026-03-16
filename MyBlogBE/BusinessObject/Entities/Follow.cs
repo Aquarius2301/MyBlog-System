@@ -26,6 +26,12 @@ public class Follow
     [Required]
     public Guid FollowingId { get; set; }
 
+    /// <summary>
+    /// The date and time when the follow relationship was created.
+    /// </summary>
+    [Required]
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+
     #region Navigation Properties
 
     /// <summary>

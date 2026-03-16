@@ -1,7 +1,9 @@
+using Application.Dtos;
+
 public interface IFollowService
 {
-    Task FollowUserAsync(Guid followingId);
-    Task UnfollowUserAsync(Guid followingId);
-    // Task<IEnumerable<Guid>> GetFollowersAsync(Guid userId);
+    Task<int> FollowUserAsync(Guid followingId);
+    Task<int> UnfollowUserAsync(Guid followingId);
+    Task<List<AccountNameResponse>> GetFollowersAsync(Guid userId, int pageSize, DateTime? cursor);
     // Task<IEnumerable<Guid>> GetFollowingAsync(Guid userId);
 }

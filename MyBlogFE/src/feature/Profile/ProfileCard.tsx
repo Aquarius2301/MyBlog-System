@@ -47,7 +47,7 @@ const ProfileCard = ({ account }: ProfileCardProps) => {
     },
   ];
 
-  const updateProfile = (isFollowing: boolean) => {
+  const updateProfile = (isFollowing: boolean, followerCount: number) => {
     queryClient.setQueryData(
       ["getProfile", account.username],
       (oldData: AccountResponse | undefined) => {
@@ -57,6 +57,7 @@ const ProfileCard = ({ account }: ProfileCardProps) => {
           data: {
             ...oldData.data,
             isFollowing,
+            followers: followerCount,
           },
         };
       },
@@ -66,16 +67,16 @@ const ProfileCard = ({ account }: ProfileCardProps) => {
   const { isLoading: followLoading, mutate: follow } = useApiMutation({
     mutationKey: ["follow", account.id],
     mutationFn: followApi.follow,
-    onSuccess: () => {
-      updateProfile(true);
+    onSuccess: (data: number | null) => {
+      data && updateProfile(true, data);
     },
   });
 
   const { isLoading: unfollowLoading, mutate: unfollow } = useApiMutation({
     mutationKey: ["follow", account.id],
     mutationFn: followApi.unfollow,
-    onSuccess: () => {
-      updateProfile(false);
+    onSuccess: (data: number | null) => {
+      data && updateProfile(false, data);
     },
   });
 
@@ -102,6 +103,10 @@ const ProfileCard = ({ account }: ProfileCardProps) => {
         <Tag variant="outlined" color={"blue"}>
           {account.status}
         </Tag>
+        <Text as={"p"} style={{ marginBottom: 0 }}>
+          <Text style={{ fontWeight: "bold" }}>Followers:</Text>{" "}
+          {account.followers}
+        </Text>
         {account.isOwner ? null : account.isFollowing ? (
           <Button
             type="default"

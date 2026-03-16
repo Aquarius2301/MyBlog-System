@@ -94,9 +94,9 @@ export const LoginForm = () => {
       {/* Testing credentials */}
       {import.meta.env.VITE_TESTING === "true" && (
         <Card size="small" style={{ marginBottom: 6, width: "100%" }}>
-          Username: testuser
+          Username: {import.meta.env.VITE_TESTING_USERNAME}
           <br />
-          Password: 123
+          Password: {import.meta.env.VITE_TESTING_PASSWORD}
         </Card>
       )}
 
