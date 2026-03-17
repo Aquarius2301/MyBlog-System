@@ -5,5 +5,3 @@ export { default as useFixInfiniteQuery } from "./useFixInfiniteQuery";
 export { default as useSafeTranslation } from "./useSafeTranslation";
 export { default as useAuth } from "./useAuth";
 export { default as useTheme } from "./useTheme";
-export { default as usePost } from "./usePost";
-export { default as useComment } from "./useComment";

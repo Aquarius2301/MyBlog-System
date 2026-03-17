@@ -62,6 +62,7 @@ const ProfileCard = ({ account }: ProfileCardProps) => {
         };
       },
     );
+    queryClient.invalidateQueries({ queryKey: ["followers"] });
   };
 
   const { isLoading: followLoading, mutate: follow } = useApiMutation({
@@ -104,7 +105,7 @@ const ProfileCard = ({ account }: ProfileCardProps) => {
           {account.status}
         </Tag>
         <Text as={"p"} style={{ marginBottom: 0 }}>
-          <Text style={{ fontWeight: "bold" }}>Followers:</Text>{" "}
+          <Text style={{ fontWeight: "bold" }}>{t("FollowingCount")}:</Text>{" "}
           {account.followers}
         </Text>
         {account.isOwner ? null : account.isFollowing ? (

@@ -35,7 +35,15 @@ namespace WebApi.Controllers
         )
         {
             var res = await _service.GetFollowersAsync(userId, request.PageSize, request.Cursor);
-            return HandleResponse(Success(res));
+
+            var result = new PaginationResponse
+            {
+                Items = res.Item1,
+                PageSize = request.PageSize,
+                Cursor = res.Item2,
+            };
+
+            return HandleResponse(Success(result));
         }
     }
 }

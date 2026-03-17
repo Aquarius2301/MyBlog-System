@@ -113,9 +113,7 @@ const PostItem = ({ post, enableViewModal = true }: PostItemProps) => {
             </div>
             <div
               style={{ marginLeft: "10px", cursor: "pointer" }}
-              onClick={() =>
-                navigate(`/profile?username=${post.author.username}`)
-              }
+              onClick={() => navigate(`/profile?u=${post.author.username}`)}
             >
               <Text bold as={"p"}>
                 {post.author.displayName}{" "}

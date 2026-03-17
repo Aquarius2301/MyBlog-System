@@ -1,6 +1,5 @@
 import { postApi } from "@/api";
 import { PageLayout } from "@/components";
-import { PostProvider } from "@/contexts";
 import { PostList } from "@/feature";
 import { useSafeTranslation } from "@/hooks";
 import { useQueryClient } from "@tanstack/react-query";
@@ -16,9 +15,7 @@ const HomePage = () => {
 
   return (
     <PageLayout title={t("HomePage")}>
-      <PostProvider>
-        <PostList fetch={postApi.getPosts} />
-      </PostProvider>
+      <PostList fetch={postApi.getPosts} />
     </PageLayout>
   );
 };

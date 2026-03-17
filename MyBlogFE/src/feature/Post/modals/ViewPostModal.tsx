@@ -3,7 +3,6 @@ import { useApiQuery, useSafeTranslation, useFixInfiniteQuery } from "@/hooks";
 import PostLoadingCard from "../PostLoadingCard";
 import PostItem from "../PostItem";
 import { CommentList } from "@/feature/Comment";
-import { CommentProvider } from "@/contexts/CommentContext";
 import type {
   GetPostDetailData,
   GetPostsData,
@@ -117,9 +116,8 @@ ViewPostModalProps) => {
               post={{ ...data, latestComment, score }}
               enableViewModal={false}
             />
-            <CommentProvider>
-              <CommentList postId={data.id} />
-            </CommentProvider>
+
+            <CommentList postId={data.id} />
           </div>
         )
       )}

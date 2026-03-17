@@ -1,7 +1,7 @@
 import { postApi } from "@/api";
 import { PageLayout, ProfileLoading } from "@/components";
-import { PostProvider } from "@/contexts/PostContext";
 import { PostList, ProfileCard } from "@/feature";
+import { FollowersCard } from "@/feature/Profile";
 import { useAuth, useSafeTranslation } from "@/hooks";
 import { useEffect, useState } from "react";
 
@@ -28,13 +28,13 @@ const MyProfilePage = () => {
         account && (
           <>
             <ProfileCard account={account} />
-            <PostProvider>
-              <PostList
-                fetch={(cursor) =>
-                  postApi.getPostByUsername(account.username, cursor)
-                }
-              />
-            </PostProvider>
+            {account.followers > 0 && <FollowersCard account={account} />}
+
+            <PostList
+              fetch={(cursor) =>
+                postApi.getPostByUsername(account.username, cursor)
+              }
+            />
           </>
         )
       )}

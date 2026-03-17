@@ -66,6 +66,8 @@
 
   "Unfollow": "Unfollow",
   "Follow": "Follow",
+  "Followers": "Followers",
+  "FollowingCount": "Following",
 
   "LoginPage": "Login Page",
   "Welcome": "Welcome to MyBlog",

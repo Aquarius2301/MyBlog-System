@@ -10,7 +10,6 @@ import { Button, Divider, Flex, Space } from "antd";
 import { CommentOutlined, LikeFilled, LikeOutlined } from "@ant-design/icons";
 import CommentChildList from "./CommentChildList";
 import CommentCreateInput from "./components/CommentCreateInput";
-import { CommentProvider } from "@/contexts/CommentContext";
 import type { GetCommentsData } from "@/types/comment.type";
 import { CommentEditDropdown } from "./CommentEditDropdown";
 import { useState } from "react";
@@ -153,16 +152,14 @@ const CommentItem = ({
         />
       )}
       {item.commentCount > 0 && (
-        <CommentProvider>
-          <CommentChildList
-            commentId={item.id}
-            postId={postId}
-            replyingToId={replyingToId}
-            setReplyingToId={setReplyingToId}
-            parentCommentId={item.id}
-            // onCreateReturn()
-          />
-        </CommentProvider>
+        <CommentChildList
+          commentId={item.id}
+          postId={postId}
+          replyingToId={replyingToId}
+          setReplyingToId={setReplyingToId}
+          parentCommentId={item.id}
+          // onCreateReturn()
+        />
       )}
     </>
   );

@@ -1,7 +1,7 @@
 import { accountApi, postApi } from "@/api";
 import { PageLayout, ProfileLoading } from "@/components";
-import { PostProvider } from "@/contexts";
 import { PostList, ProfileCard } from "@/feature";
+import { FollowersCard } from "@/feature/Profile";
 import { useApiQuery, useAuth, useSafeTranslation } from "@/hooks";
 import useUrlSearchParams from "@/hooks/useUrlSearchParams";
 import { Card, Result } from "antd";
@@ -38,14 +38,12 @@ const MyProfilePage = () => {
       ) : data ? (
         <>
           <ProfileCard account={data} />
-          <PostProvider>
-            <PostList
-              fetch={(cursor) =>
-                postApi.getPostByUsername(data.username, cursor)
-              }
-              showCreatePost={false}
-            />
-          </PostProvider>
+          {data.followers > 0 && <FollowersCard account={data} />}
+
+          <PostList
+            fetch={(cursor) => postApi.getPostByUsername(data.username, cursor)}
+            showCreatePost={false}
+          />
         </>
       ) : (
         error && (

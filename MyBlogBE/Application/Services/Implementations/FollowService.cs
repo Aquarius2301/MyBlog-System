@@ -5,6 +5,7 @@ using AutoMapper.QueryableExtensions;
 using BusinessObject.Entities;
 using DataAccess.UnitOfWork;
 using Microsoft.EntityFrameworkCore;
+using Org.BouncyCastle.Math.EC.Rfc7748;
 
 public class FollowService : IFollowService
 {
@@ -32,7 +33,12 @@ public class FollowService : IFollowService
             return _unitOfWork.Follows.ReadOnly().Count(f => f.FollowingId == followingId); // Already following, do nothing
         }
 
-        var follow = new Follow { AccountId = AccountId, FollowingId = followingId, CreatedAt = DateTime.UtcNow };
+        var follow = new Follow
+        {
+            AccountId = AccountId,
+            FollowingId = followingId,
+            CreatedAt = DateTime.UtcNow,
+        };
         _unitOfWork.Follows.Add(follow);
 
         await _unitOfWork.SaveChangesAsync();
@@ -59,7 +65,7 @@ public class FollowService : IFollowService
         return _unitOfWork.Follows.ReadOnly().Count(f => f.FollowingId == followingId);
     }
 
-    public async Task<List<AccountNameResponse>> GetFollowersAsync(
+    public async Task<(List<AccountNameResponse>, DateTime?)> GetFollowersAsync(
         Guid userId,
         int pageSize,
         DateTime? cursor
@@ -69,10 +75,19 @@ public class FollowService : IFollowService
             .Follows.ReadOnly()
             .Where(f => f.FollowingId == userId && (cursor == null || f.CreatedAt < cursor))
             .OrderByDescending(f => f.CreatedAt)
-            .Take(pageSize)
-            .ProjectTo<AccountNameResponse>(_mapper.ConfigurationProvider)
+            .Take(pageSize + 1)
+            .Select(x => new { Account = _mapper.Map<AccountNameResponse>(x.Account), x.CreatedAt })
             .ToListAsync();
 
-        return followers;
+        Console.WriteLine(
+            $"Fetched {followers.Count} followers for user {userId} with cursor {cursor}"
+        );
+
+        var cursorDate =
+            followers.Count > pageSize ? followers[pageSize - 1].CreatedAt : (DateTime?)null;
+
+        var res = followers.Take(pageSize).Select(x => x.Account).ToList();
+
+        return (res, cursorDate);
     }
 }

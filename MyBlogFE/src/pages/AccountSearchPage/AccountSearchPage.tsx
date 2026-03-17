@@ -76,7 +76,10 @@ const AccountSearchPage = () => {
                 </p>
               }
             >
-              {data && data.map((account) => <AccountItem account={account} />)}
+              {data &&
+                data.map((account) => (
+                  <AccountItem account={account} key={account.id} />
+                ))}
             </InfiniteScroll>
           </div>
         )}
