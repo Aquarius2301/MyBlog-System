@@ -130,7 +130,7 @@ public class AccountController : BaseController
         )
             errors["displayName"] = "DisplayNameLength";
 
-        if (request.Language != "en" && request.Language != "vi" && request.Language != "ja")
+        if (!LanguageType.IsValid(request.Language ?? ""))
             errors["language"] = "LanguageInvalid";
 
         if (errors.Count > 0)
@@ -179,7 +179,7 @@ public class AccountController : BaseController
 
         if (errors.Count > 0)
         {
-            return BadRequest(new ApiResponse<object?>(400, "PasswordChangeFailed", errors));
+            throw new BadRequestException("PasswordChangeFailed", errors);
         }
 
         await _service.ChangePasswordAsync(request.NewPassword);
