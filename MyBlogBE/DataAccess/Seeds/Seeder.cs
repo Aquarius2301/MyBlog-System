@@ -12,7 +12,69 @@ public class Seeder
         CreatePosts(context);
         CreatePostLikes(context);
         CreateComments(context);
+        CreateConversations(context);
         CreateTarotCard(context);
+    }
+
+    private static void CreateConversations(MyBlogContext context)
+    {
+        if (!context.Conversations.Any())
+        {
+            Console.WriteLine("Seeding conversations and messages...");
+
+            var accounts = context.Accounts.ToList();
+            if (accounts.Count < 2)
+                return;
+
+            var rand = new Random();
+            var conversations = new List<Conversation>();
+            var messages = new List<Message>();
+
+            int participantCount = Math.Max(2, accounts.Count * 60 / 100); // 60% participate
+            var participants = accounts.OrderBy(a => rand.Next()).Take(participantCount).ToList();
+
+            for (int i = 0; i < participants.Count; i++)
+            {
+                for (int j = i + 1; j < participants.Count; j++)
+                {
+                    var convId = Guid.NewGuid();
+                    var conv = new Conversation
+                    {
+                        Id = convId,
+                        Account1Id = participants[i].Id,
+                        Account2Id = participants[j].Id,
+                        CreatedAt = DateTime.UtcNow.AddDays(rand.Next(-100, 0)),
+                    };
+                    conversations.Add(conv);
+
+                    int messageCount = rand.Next(1, 6);
+                    var pair = new[] { participants[i], participants[j] };
+                    for (int m = 0; m < messageCount; m++)
+                    {
+                        var sender = pair[m % 2];
+                        messages.Add(
+                            new Message
+                            {
+                                Id = Guid.NewGuid(),
+                                ConversationId = convId,
+                                SenderId = sender.Id,
+                                Content = $"Auto message {m + 1} from {sender.Username}",
+                                CreatedAt = DateTime.UtcNow.AddMinutes(-rand.Next(1, 10000)),
+                                IsRead = rand.NextDouble() < 0.5,
+                            }
+                        );
+                    }
+                }
+            }
+
+            context.Conversations.AddRange(conversations);
+            if (messages.Any())
+            {
+                context.Messages.AddRange(messages);
+            }
+
+            context.SaveChanges();
+        }
     }
 
     private static void CreateTarotCard(MyBlogContext context)

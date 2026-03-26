@@ -49,6 +49,16 @@ public interface IUnitOfWork
     IRepository<Follow> Follows { get; }
 
     /// <summary>
+    /// Gets the conversation repository.
+    /// </summary>
+    IRepository<Conversation> Conversations { get; }
+
+    /// <summary>
+    /// Gets the message repository.
+    /// </summary>
+    IRepository<Message> Messages { get; }
+
+    /// <summary>
     /// Begins a new database transaction.
     /// </summary>
     /// <returns></returns>

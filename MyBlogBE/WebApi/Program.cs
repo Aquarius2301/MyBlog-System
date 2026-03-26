@@ -2,6 +2,7 @@ using DataAccess;
 using DataAccess.Seeds;
 using Microsoft.AspNetCore.HttpOverrides;
 using WebApi.Extensions;
+using WebApi.Hubs;
 using WebApi.Middlewares;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -36,6 +37,9 @@ builder.Services.AddApplicationServices();
 // Web (CORS, Localization)
 builder.Services.AddWebServices(builder.Configuration);
 
+// SignalR
+builder.Services.AddSignalR();
+
 var app = builder.Build();
 
 // Middlewares
@@ -66,6 +70,8 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseCors("_myAllowSpecificOrigins");
+
+app.MapHub<ChatHub>("/chatHub");
 
 app.UseAuthentication();
 

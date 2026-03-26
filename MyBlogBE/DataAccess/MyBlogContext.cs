@@ -13,6 +13,8 @@ public class MyBlogContext : DbContext
     public DbSet<PostLike> PostLikes { get; set; }
     public DbSet<Picture> Pictures { get; set; }
     public DbSet<TarotCard> TarotCards { get; set; }
+    public DbSet<Message> Messages { get; set; }
+    public DbSet<Conversation> Conversations { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -96,6 +98,27 @@ public class MyBlogContext : DbContext
             .Entity<CommentLike>()
             .HasIndex(u => new { u.CommentId, u.AccountId })
             .IsUnique();
+
+        modelBuilder
+            .Entity<Conversation>()
+            .HasOne(a => a.Account1)
+            .WithMany()
+            .HasForeignKey(c => c.Account1Id)
+            .OnDelete(DeleteBehavior.NoAction);
+
+        modelBuilder
+            .Entity<Conversation>()
+            .HasOne(a => a.Account2)
+            .WithMany()
+            .HasForeignKey(c => c.Account2Id)
+            .OnDelete(DeleteBehavior.NoAction);
+
+        modelBuilder
+            .Entity<Message>()
+            .HasOne(a => a.Conversation)
+            .WithMany(c => c.Messages)
+            .HasForeignKey(c => c.ConversationId)
+            .OnDelete(DeleteBehavior.NoAction);
 
         modelBuilder
             .Entity<Follow>()
