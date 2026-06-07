@@ -3,16 +3,22 @@ import { Typography } from "antd";
 import { useState } from "react";
 
 export type ParagraphProps = {
-  content: string;
+  children?: string;
   isExpandable?: boolean;
+  style?: React.CSSProperties;
 };
 
-const Paragraph = ({ content, isExpandable = false }: ParagraphProps) => {
+const Paragraph = ({
+  children,
+  isExpandable = false,
+  style,
+}: ParagraphProps) => {
   const [expanded, setExpanded] = useState<boolean>(false);
   const { t } = useSafeTranslation();
 
   return (
     <Typography.Paragraph
+      style={style}
       ellipsis={{
         rows: 1,
         expandable: isExpandable ? "collapsible" : false,
@@ -21,7 +27,7 @@ const Paragraph = ({ content, isExpandable = false }: ParagraphProps) => {
         symbol: expanded ? t("ShowLess") : t("ShowMore"),
       }}
     >
-      {content}
+      {children}
     </Typography.Paragraph>
   );
 };

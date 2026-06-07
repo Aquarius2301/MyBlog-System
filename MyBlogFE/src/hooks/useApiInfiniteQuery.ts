@@ -19,7 +19,7 @@ interface UseApiInfiniteQueryOptions<TData, TVariables> {
    * Receives pageParam (cursor/offset) via variables and returns paginated response
    */
   queryFn: (
-    pageParam: TVariables
+    pageParam: TVariables,
   ) => Promise<ApiResponse<PaginationResponse<TData>>>;
 
   /**
@@ -212,24 +212,25 @@ export default function useApiInfiniteQuery<TData = any, TVariables = any>({
    * This ensures no duplicate items appear in the final array,
    * which can happen if pages overlap or data changes during pagination
    */
+  console.log("Raw pages data:", query.data);
   const data =
     query.data === undefined
       ? undefined
       : query.data
-      ? (Array.from(
-          new Set(
-            query.data.pages
-              .flatMap((p) => p.data?.items)
-              .map((item: any) => item.id)
+        ? (Array.from(
+            new Set(
+              query.data.pages
+                .flatMap((p) => p.data?.items)
+                .map((item: any) => item.id),
+            ),
           )
-        )
-          .map((id) =>
-            query.data.pages
-              .flatMap((p) => p.data?.items)
-              .find((item: any) => item.id === id)
-          )
-          .filter(Boolean) as TData[])
-      : null;
+            .map((id) =>
+              query.data.pages
+                .flatMap((p) => p.data?.items)
+                .find((item: any) => item.id === id),
+            )
+            .filter(Boolean) as TData[])
+        : null;
 
   return {
     // Flattened and deduplicated items from all pages

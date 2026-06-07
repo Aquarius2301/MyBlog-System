@@ -21,6 +21,16 @@ public class ConversationProfile : Profile
             )
             .ForMember(dest => dest.CreatedAt, opt => opt.MapFrom(src => src.CreatedAt));
 
+        CreateMap<Message, MessagesResponse>()
+            // .ForMember(
+            //     dest => dest.IsOwner,
+            //     opt => opt.MapFrom(src => src.SenderId == currentAccId)
+            // )
+            .ForMember(dest => dest.Id, opt => opt.MapFrom(src => src.Id))
+            .ForMember(dest => dest.Content, opt => opt.MapFrom(src => src.Content))
+            .ForMember(dest => dest.CreatedAt, opt => opt.MapFrom(src => src.CreatedAt))
+            .ForMember(dest => dest.SenderId, opt => opt.MapFrom(src => src.SenderId));
+
         CreateMap<Conversation, ConversationsResponse>()
             .ForMember(dest => dest.ConversationId, opt => opt.MapFrom(src => src.Id))
             .ForMember(

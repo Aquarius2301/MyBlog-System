@@ -6,3 +6,4 @@ export * from "./ViewPostPage";
 export * from "./AccountSearchPage";
 export * from "./ConfirmPage";
 export * from "./TarotPage";
+export * from "./ChatPage";

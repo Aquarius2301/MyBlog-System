@@ -10,6 +10,7 @@ import {
 import { useNavigate } from "react-router-dom";
 import {
   LogoutOutlined,
+  MessageOutlined,
   MoonOutlined,
   SearchOutlined,
   StarOutlined,
@@ -74,6 +75,12 @@ const NavigationBar = ({ title }: NavigationBarProps) => {
               style={{ marginLeft: 10 }}
               onClick={() => navigate("/tarot")}
               icon={<StarOutlined />}
+              type="text"
+            />
+            <Button
+              style={{ marginLeft: 10 }}
+              onClick={() => navigate("/chat")}
+              icon={<MessageOutlined />}
               type="text"
             />
           </div>

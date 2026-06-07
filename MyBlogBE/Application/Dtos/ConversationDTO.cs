@@ -18,7 +18,7 @@ public class ConversationsResponse
 
 public class MessagesResponse
 {
-    public Guid MessageId { get; set; }
+    public Guid Id { get; set; }
     public Guid SenderId { get; set; }
     public string Content { get; set; } = null!;
     public DateTime CreatedAt { get; set; }

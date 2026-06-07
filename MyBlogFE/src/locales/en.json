@@ -69,6 +69,14 @@
   "Followers": "Followers",
   "FollowingCount": "Following",
 
+  "SecondAgo": "seconds ago",
+  "MinuteAgo": "minutes ago",
+  "HourAgo": "hours ago",
+  "DayAgo": "days ago",
+  "WeekAgo": "weeks ago",
+  "MonthAgo": "months ago",
+  "YearAgo": "years ago",
+
   "LoginPage": "Login Page",
   "Welcome": "Welcome to MyBlog",
   "LoginToContinue": "Login to continue",

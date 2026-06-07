@@ -8,6 +8,7 @@ import {
   TarotPage,
   ViewPostPage,
 } from "@/pages";
+import ChatPage from "@/pages/ChatPage";
 import type { ComponentType } from "react";
 
 interface RouteConfig {
@@ -31,6 +32,7 @@ export const routes: RouteConfig[] = [
   { path: "/account/search", component: AccountSearchPage, isProtected: true },
   { path: "/confirm", component: ConfirmPage, isProtected: false },
   { path: "/tarot", component: TarotPage, isProtected: true },
+  { path: "/chat", component: ChatPage, isProtected: true },
 ];
 
 //   { path: "/", component: HomePage, protected: true },

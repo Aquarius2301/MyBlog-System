@@ -13,7 +13,7 @@ export type PageLayoutProps = {
 const PageLayout = ({
   children,
   title,
-  contentCentered = false,
+  contentCentered = true,
 }: PageLayoutProps) => {
   useEffect(() => {
     document.title = "My Blog" + (title ? ` - ${title}` : "");
@@ -26,10 +26,12 @@ const PageLayout = ({
         {/* <SideBar /> */}
         <Content className="main-content">
           <div
-            className="content-wrapper"
-            style={{
-              justifyContent: contentCentered ? "center" : "flex-start",
-            }}
+            className={`content-wrapper_${
+              contentCentered ? "centered" : "full"
+            }`}
+            // style={{
+            //   justifyContent: contentCentered ? "center" : "flex-start",
+            // }}
           >
             {children}
           </div>

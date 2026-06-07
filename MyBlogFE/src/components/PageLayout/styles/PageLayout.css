@@ -1,31 +1,75 @@
 .main-content {
   display: flex;
   justify-content: center;
-}
-
-.content-wrapper {
   width: 100%;
-  margin: 5px auto 10px;
+  min-height: 100%;
 }
 
-/* Responsive */
+.content-wrapper_centered,
+.content-wrapper_full {
+  width: 100%;
+}
+
+/* Center mode  */
+.content-wrapper_centered {
+  margin: 0 auto;
+  padding: 20px;
+}
+
+/* Full view mode */
+.content-wrapper_full {
+  padding: 24px;
+}
+
+/* Responsive for center mode */
 @media (max-width: 575.98px) {
-  .content-wrapper {
-    width: 90%;
+  .content-wrapper_centered {
+    max-width: 100%;
   }
 }
-@media (min-width: 576px) and (max-width: 767.98px) {
-  .content-wrapper {
-    width: 80%;
+
+@media (min-width: 576px) {
+  .content-wrapper_centered {
+    max-width: 540px;
   }
 }
-@media (min-width: 768px) and (max-width: 991.98px) {
-  .content-wrapper {
-    width: 70%;
+
+@media (min-width: 768px) {
+  .content-wrapper_centered {
+    max-width: 720px;
   }
 }
+
 @media (min-width: 992px) {
-  .content-wrapper {
-    width: 60%;
+  .content-wrapper_centered {
+    max-width: 960px;
   }
+}
+
+@media (min-width: 1200px) {
+  .content-wrapper_centered {
+    max-width: 1140px;
+  }
+}
+
+/* Toàn bộ scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+/* Track (background) */
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+/* Thanh kéo */
+::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 10px;
+  transition: background 0.2s;
+}
+
+/* Hover */
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.5);
 }

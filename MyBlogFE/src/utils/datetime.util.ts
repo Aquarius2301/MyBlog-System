@@ -90,6 +90,49 @@ export function formatDateTime(iso: string): string | null {
   return `${day}-${month}-${year} ${hour}:${minute}`;
 }
 
+type TimeUnit =
+  | "second"
+  | "minute"
+  | "hour"
+  | "day"
+  | "week"
+  | "month"
+  | "year";
+
+export function getTimeAgo(
+  dateInput: Date | string | number,
+  lang: string = "vi",
+): string {
+  const now = new Date();
+  const date = new Date(dateInput);
+
+  let diff = Math.floor((date.getTime() - now.getTime()) / 1000);
+
+  const rtf = new Intl.RelativeTimeFormat(lang, { numeric: "auto" });
+
+  const divisions: { amount: number; unit: TimeUnit }[] = [
+    { amount: 60, unit: "second" },
+    { amount: 60, unit: "minute" },
+    { amount: 24, unit: "hour" },
+    { amount: 7, unit: "day" },
+    { amount: 4.34524, unit: "week" },
+    { amount: 12, unit: "month" },
+    { amount: Infinity, unit: "year" },
+  ];
+
+  let unit: TimeUnit = "second";
+
+  for (let i = 0; i < divisions.length; i++) {
+    if (Math.abs(diff) < divisions[i].amount) {
+      unit = divisions[i].unit;
+      break;
+    }
+    diff /= divisions[i].amount;
+  }
+
+  return rtf.format(Math.round(diff), unit);
+}
+
 // export function formatDate(iso: string): string | null {
 //   const d = tryCreateDate(iso);
 //   if (!d) return null;
